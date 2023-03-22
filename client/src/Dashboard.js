@@ -41,7 +41,7 @@ export default function Dashboard({ code }) {
   useEffect(() => {
     if (!accessToken) return
     spotifyApi.setAccessToken(accessToken)
-  }, [accessToken])
+  }, [accessToken])       
 
   useEffect(() => {
     if (!search) return setSearchResults([])
@@ -100,4 +100,5 @@ export default function Dashboard({ code }) {
       </div>
     </Container>
   )
+  
 }
