@@ -1,31 +1,36 @@
-import { useState, useEffect } from "react"
-import useAuth from "./useAuth"
-import Player from "./Player"
-import TrackSearchResult from "./TrackSearchResult"
-import { Container, Form } from "react-bootstrap"
-import SpotifyWebApi from "spotify-web-api-node"
-import axios from "axios"
+import { useState, useEffect } from "react";
+import useAuth from "./useAuth";
+import Player from "./Player";
+import TrackSearchResult from "./TrackSearchResult";
+import { Container, Form } from "react-bootstrap";
+import SpotifyWebApi from "spotify-web-api-node";
+import axios from "axios";
+import LikeDislike from "./LikeDislike";
 
 const spotifyApi = new SpotifyWebApi({
   clientId: " df5386eb382b4286a239d80f6b301967",
-})
+});
 
 export default function Dashboard({ code }) {
-  const accessToken = useAuth(code)
-  const [search, setSearch] = useState("")
-  const [searchResults, setSearchResults] = useState([])
-  const [playingTrack, setPlayingTrack] = useState()
-  const [lyrics, setLyrics] = useState("")
+  const accessToken = useAuth(code);
+  const [search, setSearch] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [playingTrack, setPlayingTrack] = useState();
+  const [lyrics, setLyrics] = useState("");
+  const [queue, setQueue] = useState([]);
 
   function chooseTrack(track) {
-    setPlayingTrack(track)
-    setSearch("")
-    setLyrics("")
+    setPlayingTrack(track);
+    setSearch("");
+    setLyrics("");
+  }
+
+  function addToQueue(track) {
+    setQueue((prevQueue) => [...prevQueue, track]);
   }
 
   useEffect(() => {
-    if (!playingTrack) return
-
+    if (!playingTrack) return setLyrics("Search a song to display lyrics");
     axios
       .get("http://localhost:3001/lyrics", {
         params: {
@@ -33,72 +38,103 @@ export default function Dashboard({ code }) {
           artist: playingTrack.artist,
         },
       })
-      .then(res => {
-        setLyrics(res.data.lyrics)
-      })
-  }, [playingTrack])
+      .then((res) => {
+        setLyrics(res.data.lyrics);
+      });
+  }, [playingTrack]);
 
   useEffect(() => {
-    if (!accessToken) return
-    spotifyApi.setAccessToken(accessToken)
-  }, [accessToken])       
+    if (!accessToken) return;
+    spotifyApi.setAccessToken(accessToken);
+  }, [accessToken]);
 
   useEffect(() => {
-    if (!search) return setSearchResults([])
-    if (!accessToken) return
+    if (!search) return setSearchResults([]);
+    if (!accessToken) return "No access";
 
-    let cancel = false
-    spotifyApi.searchTracks(search).then(res => {
-      if (cancel) return
+    let cancel = false;
+    spotifyApi.searchTracks(search).then((res) => {
+      if (cancel) return;
       setSearchResults(
-        res.body.tracks.items.map(track => {
+        res.body.tracks.items.map((track) => {
           const smallestAlbumImage = track.album.images.reduce(
             (smallest, image) => {
-              if (image.height < smallest.height) return image
-              return smallest
+              if (image.height < smallest.height) return image;
+              return smallest;
             },
             track.album.images[0]
-          )
+          );
 
           return {
             artist: track.artists[0].name,
             title: track.name,
             uri: track.uri,
             albumUrl: smallestAlbumImage.url,
-          }
+          };
         })
-      )
-    })
+      );
+    });
 
-    return () => (cancel = true)
-  }, [search, accessToken])
+    return () => (cancel = true);
+  }, [search, accessToken]);
+
+  const queueTrack = (trackUri) => {
+    if (!accessToken) return;
+    spotifyApi.queue(trackUri).then(
+      () => {
+        console.log("track added to queue");
+      },
+      (err) => {
+        console.log("something went wrong");
+      }
+    );
+  };
 
   return (
-    <Container className="d-flex flex-column py-2" style={{ height: "100vh" }}>
+    <Container
+      className="d-flex flex-column py-2"
+      style={{ height: "100vh", maxWidth: "600px", margin: "auto" }}
+    >
       <Form.Control
         type="search"
-        placeholder="Search Songs / Artists"
+        placeholder="Search for a song..."
         value={search}
-        onChange={e => setSearch(e.target.value)}
+        onChange={(e) => setSearch(e.target.value)}
       />
-      <div className="flex-grow-1 my-2" style={{ overflowY: "auto", overflowX: "hidden"}}>
-        {searchResults.map(track => (
+      <div
+        className="flex-grow-1 my-2"
+        style={{ overflowY: "auto", overflowX: "hidden" }}
+      >
+        {searchResults.map((track) => (
           <TrackSearchResult
             track={track}
             key={track.uri}
             chooseTrack={chooseTrack}
+            queueTrack={queueTrack}
           />
         ))}
         {searchResults.length === 0 && (
-          <div className="text-center" style={{ whiteSpace: "pre" }}>
-            {lyrics}
-          </div>
+          <>
+            <div className="d-flex justify-content-center align-items-center mb-2">
+              {playingTrack && (
+                <div>
+                  <h4>{playingTrack.title}</h4>
+                  <p className="text-muted">{playingTrack.artist}</p>
+                </div>
+              )}
+            </div>
+            <div className="text-center" style={{ whiteSpace: "pre" }}>
+              {lyrics}
+            </div>
+          </>
         )}
+      </div>
+      <div>
+        <LikeDislike />
       </div>
       <div>
         <Player accessToken={accessToken} trackUri={playingTrack?.uri} />
       </div>
     </Container>
-  )
-  
+  );
 }
