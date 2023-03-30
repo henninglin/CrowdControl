@@ -1,4 +1,3 @@
-import { faCircleXmark } from "@fortawesome/free-solid-svg-icons";
 import React from "react";
 
 const ProgressBar = (props) => {

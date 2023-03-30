@@ -17,7 +17,6 @@ export default function Dashboard({ code }) {
   const [searchResults, setSearchResults] = useState([]);
   const [playingTrack, setPlayingTrack] = useState();
   const [lyrics, setLyrics] = useState("");
-  const [queue, setQueue] = useState([]);
 
   function chooseTrack(track) {
     console.log("Selected track: ", track);
@@ -25,11 +24,6 @@ export default function Dashboard({ code }) {
     setSearch("");
     setLyrics("");
   }
-
-  function addToQueue(track) {
-    setQueue((prevQueue) => [...prevQueue, track]);
-  }
-
 
   useEffect(() => {
     if (!playingTrack) return setLyrics("Search a song to display lyrics");
@@ -106,6 +100,10 @@ export default function Dashboard({ code }) {
       <Navbar className="justify-content-between content">
         <Navbar.Brand>Musicify</Navbar.Brand>
         <Nav>
+          <Nav.Link href="#home">Home</Nav.Link>
+          <Nav.Link href="#lyrics">Lyrics</Nav.Link>
+          <Nav.Link href="#data">Data</Nav.Link>
+          <Nav.Link href="#account">Account</Nav.Link>
           <Nav.Link onClick={handleLogout}>Logout</Nav.Link>
         </Nav>
       </Navbar>
