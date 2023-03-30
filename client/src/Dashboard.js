@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import useAuth from "./useAuth";
 import Player from "./Player";
 import TrackSearchResult from "./TrackSearchResult";
-import { Container, Form } from "react-bootstrap";
+import { Container, Form, Navbar, Nav } from "react-bootstrap";
 import SpotifyWebApi from "spotify-web-api-node";
 import axios from "axios";
 import LikeDislike from "./LikeDislike";
@@ -20,6 +20,7 @@ export default function Dashboard({ code }) {
   const [queue, setQueue] = useState([]);
 
   function chooseTrack(track) {
+    console.log("Selected track: ", track);
     setPlayingTrack(track);
     setSearch("");
     setLyrics("");
@@ -28,6 +29,7 @@ export default function Dashboard({ code }) {
   function addToQueue(track) {
     setQueue((prevQueue) => [...prevQueue, track]);
   }
+
 
   useEffect(() => {
     if (!playingTrack) return setLyrics("Search a song to display lyrics");
@@ -90,11 +92,23 @@ export default function Dashboard({ code }) {
     );
   };
 
+  function handleLogout() {
+    localStorage.removeItem("spotify-auth")
+    window.location = "/"
+  }
+
   return (
+    <div className="dashboard">
     <Container
-      className="d-flex flex-column py-2"
-      style={{ height: "100vh", maxWidth: "600px", margin: "auto" }}
+      className="d-flex flex-column py-2 content"
+      style={{ height: "100vh", maxWidth: "600px", margin: "auto"}}
     >
+      <Navbar className="justify-content-between content">
+        <Navbar.Brand>Musicify</Navbar.Brand>
+        <Nav>
+          <Nav.Link onClick={handleLogout}>Logout</Nav.Link>
+        </Nav>
+      </Navbar>
       <Form.Control
         type="search"
         placeholder="Search for a song..."
@@ -136,5 +150,6 @@ export default function Dashboard({ code }) {
         <Player accessToken={accessToken} trackUri={playingTrack?.uri} />
       </div>
     </Container>
+    </div>
   );
 }
