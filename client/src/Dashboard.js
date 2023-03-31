@@ -6,6 +6,7 @@ import { Container, Form, Navbar, Nav } from "react-bootstrap";
 import SpotifyWebApi from "spotify-web-api-node";
 import axios from "axios";
 import LikeDislike from "./LikeDislike";
+import Data from "./Data";
 
 const spotifyApi = new SpotifyWebApi({
   clientId: " df5386eb382b4286a239d80f6b301967",
@@ -17,6 +18,8 @@ export default function Dashboard({ code }) {
   const [searchResults, setSearchResults] = useState([]);
   const [playingTrack, setPlayingTrack] = useState();
   const [lyrics, setLyrics] = useState("");
+  const [activeTab, setActiveTab] = useState("Home");
+
 
   function chooseTrack(track) {
     console.log("Selected track: ", track);
@@ -53,10 +56,10 @@ export default function Dashboard({ code }) {
       if (cancel) return;
       setSearchResults(
         res.body.tracks.items.map((track) => {
-          const smallestAlbumImage = track.album.images.reduce(
-            (smallest, image) => {
-              if (image.height < smallest.height) return image;
-              return smallest;
+          const largestAlbumImage = track.album.images.reduce(
+            (largest, image) => {
+              if (image.height > largest.height) return image;
+              return largest;
             },
             track.album.images[0]
           );
@@ -65,7 +68,7 @@ export default function Dashboard({ code }) {
             artist: track.artists[0].name,
             title: track.name,
             uri: track.uri,
-            albumUrl: smallestAlbumImage.url,
+            albumUrl: largestAlbumImage.url,
           };
         })
       );
@@ -73,18 +76,6 @@ export default function Dashboard({ code }) {
 
     return () => (cancel = true);
   }, [search, accessToken]);
-
-  const queueTrack = (trackUri) => {
-    if (!accessToken) return;
-    spotifyApi.queue(trackUri).then(
-      () => {
-        console.log("track added to queue");
-      },
-      (err) => {
-        console.log("something went wrong");
-      }
-    );
-  };
 
   function handleLogout() {
     localStorage.removeItem("spotify-auth")
@@ -95,14 +86,14 @@ export default function Dashboard({ code }) {
     <div className="dashboard">
     <Container
       className="d-flex flex-column py-2 content"
-      style={{ height: "100vh", maxWidth: "600px", margin: "auto"}}
+      style={{ height: "100vh", maxWidth: "600px", margin: "auto", }}
     >
-      <Navbar className="justify-content-between content">
+      <Navbar className="justify-content-between">
         <Navbar.Brand>Musicify</Navbar.Brand>
         <Nav>
-          <Nav.Link href="#home">Home</Nav.Link>
-          <Nav.Link href="#lyrics">Lyrics</Nav.Link>
-          <Nav.Link href="#data">Data</Nav.Link>
+          <Nav.Link href="#home" active={activeTab === "Home"} onClick={() => setActiveTab("Home")}>Home</Nav.Link>
+          <Nav.Link href="#lyrics" active={activeTab === "Lyrics"} onClick={() => setActiveTab("Lyrics")}>Lyrics</Nav.Link>
+          <Nav.Link href="#data" active={activeTab === "Data"} onClick={() => setActiveTab("Data")}>Data</Nav.Link>
           <Nav.Link href="#account">Account</Nav.Link>
           <Nav.Link onClick={handleLogout}>Logout</Nav.Link>
         </Nav>
@@ -122,31 +113,43 @@ export default function Dashboard({ code }) {
             track={track}
             key={track.uri}
             chooseTrack={chooseTrack}
-            queueTrack={queueTrack}
           />
         ))}
         {searchResults.length === 0 && (
-          <>
+          <>{activeTab === "Home" && (
             <div className="d-flex justify-content-center align-items-center mb-2">
               {playingTrack && (
-                <div>
-                  <h4>{playingTrack.title}</h4>
-                  <p className="text-muted">{playingTrack.artist}</p>
+                <div className="justify-content-center">
+                  <h4 style= {{ textAlign: 'center' }}>{playingTrack.title}</h4>
+                  <p className="text-muted" style= {{ textAlign: 'center' }}>{playingTrack.artist}</p>
+                  <div className="album-image">
+                    <img src={playingTrack.albumUrl} alt={playingTrack.title} style={{width: "300px", height: "300px"}}/>
+                  </div>
                 </div>
               )}
             </div>
+            )}
+            {activeTab === "Lyrics" &&(
             <div className="text-center" style={{ whiteSpace: "pre" }}>
               {lyrics}
             </div>
+            )}
+            {activeTab === "Data" && (
+              <div className="d-flex justify-content-center align-items-center">
+                <Data/>
+              </div>
+            )}
           </>
         )}
       </div>
+      
       <div>
         <LikeDislike />
       </div>
       <div>
         <Player accessToken={accessToken} trackUri={playingTrack?.uri} />
       </div>
+      
     </Container>
     </div>
   );

@@ -13,6 +13,11 @@
   background: linear-gradient(45deg, #d0910a, #a801ff);
 }
 
+.chart {
+  width: 10px;
+  height: 10px;
+}
+
 .btn {
   border-radius: 50%;
   background-color: grey;
@@ -27,6 +32,19 @@
   align-items: center;
 }
 
+.album-image {
+  width: 192px;
+  height: 192px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.album-image img {
+  max-width: 100%;
+  max-height: 100%;
+}
+
 .dashboard {
   display: flex;
   justify-content: center;
@@ -37,6 +55,7 @@
 .content {
   background: white;
   border-radius: 20px;
+  filter: drop-shadow(10px 5px 5px rgba(0,0,0,0.3));
 }
 
 
