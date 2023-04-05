@@ -7,6 +7,8 @@ import SpotifyWebApi from "spotify-web-api-node";
 import axios from "axios";
 import LikeDislike from "./LikeDislike";
 import Data from "./Data";
+import Participants from "./Participants";
+import History from "./History";
 
 const spotifyApi = new SpotifyWebApi({
   clientId: " df5386eb382b4286a239d80f6b301967",
@@ -28,6 +30,28 @@ export default function Dashboard({ code }) {
     setLyrics("");
   }
 
+
+  //Used to get the data from a user when clicked on History tab
+  function getMyData(){
+    (async () =>{
+      const me = await spotifyApi.getMe();
+      console.log(me.body);
+      getUserPlaylists(me.body.id);
+    })().catch(e=>{
+      console.error(e);
+    });
+  }
+
+  //Used to get the playlist from the user when clicked on the little button at history.
+  async function getUserPlaylists(userName){
+    const data = await spotifyApi.getUserPlaylists(userName)
+    console.log("-------------------+++++++++++++")
+    for(let playlist of data.body.items){
+      console.log(playlist.name + " " + playlist.id)
+    }
+  }
+
+  //Used to show lyrics from the song playing
   useEffect(() => {
     if (!playingTrack) return setLyrics("Search a song to display lyrics");
     axios
@@ -94,7 +118,8 @@ export default function Dashboard({ code }) {
           <Nav.Link href="#home" active={activeTab === "Home"} onClick={() => setActiveTab("Home")}>Home</Nav.Link>
           <Nav.Link href="#lyrics" active={activeTab === "Lyrics"} onClick={() => setActiveTab("Lyrics")}>Lyrics</Nav.Link>
           <Nav.Link href="#data" active={activeTab === "Data"} onClick={() => setActiveTab("Data")}>Data</Nav.Link>
-          <Nav.Link href="#account">Account</Nav.Link>
+          <Nav.Link href="#history" active={activeTab === "History"} onClick={() => setActiveTab("History")}>History</Nav.Link>
+          <Nav.Link href="#participants" active={activeTab === "Participants"} onClick={() => setActiveTab("Participants")}>Participants</Nav.Link>
           <Nav.Link onClick={handleLogout}>Logout</Nav.Link>
         </Nav>
       </Navbar>
@@ -137,6 +162,17 @@ export default function Dashboard({ code }) {
             {activeTab === "Data" && (
               <div className="d-flex justify-content-center align-items-center">
                 <Data/>
+              </div>
+            )}
+            {activeTab === "Participants" && (
+              <div className="d-flex justify-content-center align-items-center">
+                <Participants/>
+              </div>
+            )}
+            {activeTab === "History" && (
+              <div className="d-flex justify-content-center align-items-center">
+                <History/>
+                <button onClick={getMyData}></button>
               </div>
             )}
           </>

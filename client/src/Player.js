@@ -7,11 +7,12 @@ export default function Player({ accessToken, trackUri }) {
     useEffect(() => {
       setPlay(true);
     }, [trackUri]);
-  
+
     return (
       <div className="my-2">
         {trackUri && (
           <SpotifyPlayer
+            key={trackUri}
             token={accessToken}
             showSaveIcon
             callback={(state) => {

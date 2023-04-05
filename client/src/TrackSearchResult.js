@@ -2,7 +2,9 @@ import React from "react"
 
 export default function TrackSearchResult({ track, chooseTrack }) {
   function handlePlay() {
+    console.log(`Playing ${track.title} by ${track.artist} (${track.genre})`);
     chooseTrack(track)
+    
   }
 
   return (
