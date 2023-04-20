@@ -1,6 +1,12 @@
 import React from 'react';
+import { db } from "./firebase";
+import { collection, onSnapshot } from 'firebase/firestore';
 
 const ParticipantsList = () => {
+
+  const userRef = collection(db, "Parties")
+  const partyRef = collection(db, "Parties")
+
   // An array of hard-coded participants
   const participants = [
     { name: 'Alice', email: 'alice@example.com' },
@@ -12,7 +18,8 @@ const ParticipantsList = () => {
 
   return (
     <div>
-      <h2>Participants:</h2>
+      <h5 className="mb-3">Party Keyword: 1231201</h5>
+      <p className="mb-0">Participants:</p>
       <ul style={{listStyleType: 'none', padding:0}}>
         {participants.map((participant) => (
           <li key={participant.email}>
