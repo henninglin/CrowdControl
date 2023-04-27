@@ -1,38 +1,33 @@
-import React from 'react';
+import { useState, useEffect } from "react";
 import SpotifyWebApi from "spotify-web-api-node";
 
-
 const spotifyApi = new SpotifyWebApi({
-    clientId: " df5386eb382b4286a239d80f6b301967",
-  });
+  clientId: "df5386eb382b4286a239d80f6b301967",
+});
 
-function playlist (accessToken) { spotifyApi.getUserPlaylists('1115822713')
-.then(function(data) {
-  console.log('Retrieved playlists', data.body);
-},function(err) {
-  console.log('Something went wrong!', err);
-});  }
+const History = ({ accessToken }) => {
+  const [playlists, setPlaylists] = useState([]);
 
-const PrevPlaylist = () => {
+  useEffect(() => {
+    spotifyApi.setAccessToken(accessToken);
 
-
-  // An array of prev playlists
-  const playlists = [
-    { name: 'Alice', date: '03-04-2023' },
-    { name: 'Bob', date: '04-05-2023' },
-    { name: 'Charlie', date: '04-02-2023' },
-    { name: 'Dave', date: '01-03-2022' },
-    { name: 'Eve', date: '08-01-2023' },  
-  ];
+    spotifyApi
+      .getUserPlaylists()
+      .then((data) => {
+        setPlaylists(data.body.items);
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  }, [accessToken]);
 
   return (
     <div>
-      <h2>Previous Playlists</h2>
-      <button onClick={playlist}>click me</button>
-      <ul style={{listStyleType: 'none', padding:0}}>
+      <h5 className="mt-2">Playlist History</h5>
+      <ul style={{ listStyle: 'none', padding: 0 }}>
         {playlists.map((playlist) => (
-          <li key={playlist.email}>
-            {playlist.name} ({playlist.date})
+          <li key={playlist.id} className="mb-2">
+           <a href={`https://open.spotify.com/playlist/${playlist.id}`} target="_blank" rel="noopener noreferrer" className="btn btn-success">{playlist.name}</a>
           </li>
         ))}
       </ul>
@@ -40,4 +35,4 @@ const PrevPlaylist = () => {
   );
 };
 
-export default PrevPlaylist;
+export default History;

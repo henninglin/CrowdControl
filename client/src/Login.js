@@ -1,4 +1,4 @@
-import React from "react"
+import React from "react";
 import { useState, useEffect } from 'react'
 import { GoogleButton } from 'react-google-button'
 import Button from 'react-bootstrap/Button';
@@ -6,7 +6,7 @@ import Form from 'react-bootstrap/Form';
 import Modal from 'react-bootstrap/Modal';
 import "./App.css"
 import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
-import { addDoc, setDoc, collection, getDocs, doc } from 'firebase/firestore';
+import { addDoc, setDoc, collection, getDoc, getDocs, doc } from 'firebase/firestore';
 import { auth, db } from './firebase';
 
 const AUTH_URL =
@@ -23,8 +23,8 @@ export default function Login() {
   const [partyKeyword, setPartyKeyword] = useState('');
 
   //Adds User to Party
-  async function addUserToParty(){
-    const userRef = collection(db, "Parties", partyKeyword, "Users");
+  async function addUserToParty(input){
+    const userRef = collection(db, "Parties", input, "Users");
     const user = auth.currentUser;
 
     const docSnap = await getDocs(userRef);
@@ -38,11 +38,15 @@ export default function Login() {
     })
 
     if(isInPartyAlready === true){
+      alert("User is in party already")
+      localStorage.setItem("partyKeyword", input);
+      console.log("LocalStorage set: ", localStorage.getItem("partyKeyword"));
       return true;
     }
 
     try {
       const docRef = await addDoc(userRef,{
+        id: user.uid,
         level: 0,
         score: 0,
         displayName: user.displayName
@@ -51,27 +55,56 @@ export default function Login() {
     } catch (e){
       console.error("Error adding document ", e);
     }
+    localStorage.setItem("partyKeyword", input);
+    console.log("LocalStorage set: ", localStorage.getItem("partyKeyword"));
     return true;
   }
 
+  async function joinParty(){
+    const input = document.getElementById("join").value;
+    console.log("Trying to Join Party", input);
+    const docRef = doc(db, "Parties", input);
+    try {
+      const docSnap = await getDoc(docRef);
+      if(docSnap.exists()) {
+          console.log(docSnap.data());
+          console.log("Party exist");
+          addUserToParty(input);
+
+
+      } else {
+          alert("Party does not exist");
+      }
+     } catch(error) {
+      console.log(error)
+     }
+  }
+
   //Create Firebase Party
-  async function createParty(){
-    const docRef = await doc(db, "Parties", partyKeyword);
-
-    const data = {
-      name: partyName,
-      date: partyDate
-    };
-    setDoc(docRef, data).then(() => {
-      console.log("Party has been created successfully");
-      addUserToParty(docRef);
-    })
-    .catch(error => {
+  async function createParty() {
+    const docRef = doc(db, "Parties", partyKeyword);
+  
+    try {
+      const docSnapshot = await getDoc(docRef);
+  
+      if (docSnapshot.exists()) {
+        alert("Party already exists");
+      } else {
+        const data = {
+          PartyName: partyName,
+          Date: partyDate,
+        };
+  
+        await setDoc(docRef, data);
+        console.log("Party has been created successfully");
+        addUserToParty(partyKeyword);
+      }
+    } catch (error) {
       console.log("Error creating party", error);
-    })
-
+    }
+  
     handleClose();
-  } 
+  }
 
   // handle close and show modal
   const handleClose = () => setShowModal(false);
@@ -146,9 +179,9 @@ export default function Login() {
             Welcome, {user.displayName || user.email}!
           </h5>
           <div className="input-group mb-3">
-          <input type="text" className="form-control" placeholder="Party Keyword" aria-label="Party Keyword" aria-describedby="basic-addon2"/>
+          <input type="text" className="form-control" id="join" placeholder="Party Keyword" aria-label="Party Keyword" aria-describedby="basic-addon2"/>
             <div className="input-group-append">
-              <button className="btn btn-success" type="button">Join</button>
+              <button className="btn btn-success" type="button" onClick={joinParty}>Join</button>
             </div>
           </div>
           <Button variant="primary" onClick={handleShow} style={{ marginRight: "10px" }}>
@@ -174,7 +207,7 @@ export default function Login() {
           </Form.Group>
           <Form.Group className="mb-3" controlId="partyKeyword">
               <Form.Label>Set Party Keyword</Form.Label>
-              <Form.Control type="text" placeholder="SOFAPARTY23" onChange={(event) => setPartyKeyword(event.target.value)}/>
+              <Form.Control type="text" placeholder="SOFAPARTY23" onChange={(event) => (setPartyKeyword(event.target.value))}/>
           </Form.Group>
           </Form>
         </Modal.Body>

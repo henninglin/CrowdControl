@@ -12,6 +12,7 @@ export default function useAuth(code) {
         code,
       })
       .then(res => {
+        console.log("Response from server:", res);
         setAccessToken(res.data.accessToken)
         setRefreshToken(res.data.refreshToken)
         setExpiresIn(res.data.expiresIn)
@@ -19,7 +20,7 @@ export default function useAuth(code) {
       })
       .catch(() => {
         console.log(code)
-        //window.location = "/"
+        window.location = "/"
       })
   }, [code])
 

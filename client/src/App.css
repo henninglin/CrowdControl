@@ -4,6 +4,10 @@
   box-sizing: border-box;
 }
 
+a {
+  color: black;
+}
+
 .login {
   display: flex;
   flex-direction: column;
@@ -18,9 +22,6 @@
 }
 
 .btn {
-  border-radius: 50%;
-  background-color: grey;
-  color: white;
   align-items: center;
   justify-content: center;
 }

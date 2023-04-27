@@ -30,27 +30,10 @@ export default function Dashboard({ code }) {
     setLyrics("");
   }
 
-
-  //Used to get the data from a user when clicked on History tab
-  function getMyData(){
-    (async () =>{
-      const me = await spotifyApi.getMe();
-      console.log(me.body);
-      getUserPlaylists(me.body.id);
-    })().catch(e=>{
-      console.error(e);
-    });
-  }
-
-  //Used to get the playlist from the user when clicked on the little button at history.
-  async function getUserPlaylists(userName){
-    const data = await spotifyApi.getUserPlaylists(userName)
-    console.log("-------------------+++++++++++++")
-    for(let playlist of data.body.items){
-      console.log(playlist.name + " " + playlist.id)
-    }
-  }
-
+  useEffect(() => {
+    console.log("Access token:", accessToken);
+  }, [accessToken]);
+  
   //Used to show lyrics from the song playing
   useEffect(() => {
     if (!playingTrack) return setLyrics("Search a song to display lyrics");
@@ -67,7 +50,7 @@ export default function Dashboard({ code }) {
   }, [playingTrack]);
 
   useEffect(() => {
-    if (!accessToken) return;
+    if (!accessToken) return console.log("No access token");
     spotifyApi.setAccessToken(accessToken);
   }, [accessToken]);
 
@@ -103,7 +86,7 @@ export default function Dashboard({ code }) {
 
   function handleLogout() {
     localStorage.removeItem("spotify-auth")
-    window.location = "/"
+    window.location = "/";
   }
 
   return (
@@ -115,12 +98,12 @@ export default function Dashboard({ code }) {
       <Navbar className="justify-content-between">
         <Navbar.Brand>Musicify</Navbar.Brand>
         <Nav>
-          <Nav.Link href="#home" active={activeTab === "Home"} onClick={() => setActiveTab("Home")}>Home</Nav.Link>
-          <Nav.Link href="#lyrics" active={activeTab === "Lyrics"} onClick={() => setActiveTab("Lyrics")}>Lyrics</Nav.Link>
-          <Nav.Link href="#data" active={activeTab === "Data"} onClick={() => setActiveTab("Data")}>Data</Nav.Link>
-          <Nav.Link href="#history" active={activeTab === "History"} onClick={() => setActiveTab("History")}>History</Nav.Link>
-          <Nav.Link href="#participants" active={activeTab === "Participants"} onClick={() => setActiveTab("Participants")}>Participants</Nav.Link>
-          <Nav.Link onClick={handleLogout}>Logout</Nav.Link>
+          <Nav.Link active={activeTab === "Home"} onClick={() => setActiveTab("Home")}>Home</Nav.Link>
+          <Nav.Link active={activeTab === "Lyrics"} onClick={() => setActiveTab("Lyrics")}>Lyrics</Nav.Link>
+          <Nav.Link active={activeTab === "Data"} onClick={() => setActiveTab("Data")}>Genre</Nav.Link>
+          <Nav.Link active={activeTab === "History"} onClick={() => setActiveTab("History")}>Playlist</Nav.Link>
+          <Nav.Link active={activeTab === "Participants"} onClick={() => setActiveTab("Participants")}>Users</Nav.Link>
+          <Nav.Link onClick={handleLogout}>Exit</Nav.Link>
         </Nav>
       </Navbar>
       <Form.Control
@@ -147,15 +130,18 @@ export default function Dashboard({ code }) {
                 <div className="justify-content-center">
                   <h4 style= {{ textAlign: 'center' }}>{playingTrack.title}</h4>
                   <p className="text-muted" style= {{ textAlign: 'center' }}>{playingTrack.artist}</p>
-                  <div className="album-image">
-                    <img src={playingTrack.albumUrl} alt={playingTrack.title} style={{width: "300px", height: "300px"}}/>
-                  </div>
+                <div style={{ width: '180px', height: '180px', margin: '0 auto' }}>
+                  <img src={playingTrack.albumUrl} alt={playingTrack.title} style={{width: "100%", height: "100%", objectFit: 'cover'}}/>
+                </div>
+                <LikeDislike />
                 </div>
               )}
             </div>
             )}
-            {activeTab === "Lyrics" &&(
+            {activeTab === "Lyrics" && playingTrack && (
             <div className="text-center" style={{ whiteSpace: "pre" }}>
+              <h4 style= {{ textAlign: 'center' }}>{playingTrack.title}</h4>
+              <p className="text-muted" style= {{ textAlign: 'center' }}>{playingTrack.artist}</p>
               {lyrics}
             </div>
             )}
@@ -171,16 +157,11 @@ export default function Dashboard({ code }) {
             )}
             {activeTab === "History" && (
               <div className="d-flex justify-content-center align-items-center">
-                <History/>
-                <button onClick={getMyData}></button>
+                <History accessToken={accessToken}/>
               </div>
             )}
           </>
         )}
-      </div>
-      
-      <div>
-        <LikeDislike />
       </div>
       <div>
         <Player accessToken={accessToken} trackUri={playingTrack?.uri} />

@@ -1,30 +1,74 @@
-import React from 'react';
+import React, { useState, useEffect} from "react";
 import { db } from "./firebase";
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot, doc, getDoc } from "firebase/firestore";
+
+
 
 const ParticipantsList = () => {
+  const [participants, setParticipants] = useState([]);
+  const [currentParty, setCurrentParty] = useState({});
+  const [partyKeyword, setPartyKeyword] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  const userRef = collection(db, "Parties")
-  const partyRef = collection(db, "Parties")
+  
+  useEffect(() => {
+    const storedPartyKeyword = localStorage.getItem("partyKeyword");
+    console.log("LocalStorage get: ", storedPartyKeyword);
+    if (storedPartyKeyword) {
+      setPartyKeyword(storedPartyKeyword);
+    }
+  }, []);
 
-  // An array of hard-coded participants
-  const participants = [
-    { name: 'Alice', email: 'alice@example.com' },
-    { name: 'Bob', email: 'bob@example.com' },
-    { name: 'Charlie', email: 'charlie@example.com' },
-    { name: 'Dave', email: 'dave@example.com' },
-    { name: 'Eve', email: 'eve@example.com' },  
-  ];
 
-  return (
+  useEffect(() => {
+    if (!partyKeyword){
+      setLoading(false);
+      return
+     }
+
+    const partyRef = collection(db, "Parties", partyKeyword, "Users");
+    const unsubscribe = onSnapshot(partyRef, (querySnapshot) => {
+      const fetchedParticipants = [];
+      querySnapshot.forEach((doc) => {
+        const participantData = doc.data();
+        fetchedParticipants.push({
+          name: participantData.displayName,
+        });
+      });
+      setParticipants(fetchedParticipants);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, [partyKeyword]);
+
+  useEffect(() => {
+    if(!partyKeyword){
+      return;
+    }
+    const fetchPartyData = async () => {
+      const docRef = doc(db, "Parties", partyKeyword);
+      const docSnapshot = await getDoc(docRef);
+      if (docSnapshot.exists()) {
+        setCurrentParty(docSnapshot.data());
+      } else {
+        console.log("No such document!");
+      }
+    };
+
+    fetchPartyData();
+  }, [partyKeyword]);
+  
+  return loading ? (
+  <div>Loading ...</div>
+  ):(
     <div>
-      <h5 className="mb-3">Party Keyword: 1231201</h5>
-      <p className="mb-0">Participants:</p>
-      <ul style={{listStyleType: 'none', padding:0}}>
-        {participants.map((participant) => (
-          <li key={participant.email}>
-            {participant.name} ({participant.email})
-          </li>
+      <h5>Keyword: {partyKeyword}</h5>
+      <p className="mb-3 mt-3"> {currentParty.PartyName}</p>
+      <p>{currentParty.Date}</p>
+      <h5 className="mb-2">Participants:</h5>
+      <ul style={{ listStyleType: "none", padding: 0 }}>
+        {participants.map((participant, index) => (
+          <li key={index}>{participant.name}</li>
         ))}
       </ul>
     </div>
