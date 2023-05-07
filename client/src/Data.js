@@ -1,40 +1,75 @@
 import React, { Component } from 'react';
 import { Chart } from 'chart.js/auto';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from './firebase';
 
 class ChartComponent extends Component {
   
-  chartRef = React.createRef();
+  artistChartRef = React.createRef();
+  genreChartRef = React.createRef();
 
-  componentDidMount() {
-    const myChartRef = this.chartRef.current.getContext('2d');
+  async componentDidMount() {
+    const artistChartRef = this.artistChartRef.current.getContext('2d');
+    const genreChartRef = this.genreChartRef.current.getContext('2d');
 
-    const genres = [
-      { genre: "Pop", count: 120 },
-      { genre: "Hip Hop", count: 90 },
-      { genre: "Rock", count: 70 },
-      { genre: "EDM", count: 50 },
-      { genre: "Country", count: 30 },
-      { genre: "Classical", count: 10 }
-    ];
+    const partyKeyword = localStorage.getItem("partyKeyword");
 
-    const genreLabels = genres.map((genre) => genre.genre);
-    const genreCounts = genres.map((genre) => genre.count);
+    const partySongsRef = collection(db, "Parties", partyKeyword, "searchedSongs");
+    const songSnapshot = await getDocs(partySongsRef);
+    const songs = songSnapshot.docs.map(doc => doc.data());
 
-    new Chart(myChartRef, {
+    const artistCounts = {};
+    const genreCounts = {};
+    songs.forEach(song => {
+      if (!artistCounts[song.artist]) {
+        artistCounts[song.artist] = 0;
+      }
+      artistCounts[song.artist]++;
+
+      if (!genreCounts[song.genre]) {
+        genreCounts[song.genre] = 0;
+      }
+      genreCounts[song.genre]++;
+    });
+
+    // Convert the objects to arrays and sort them to get the top 5 artists and genres
+    const sortedArtists = Object.entries(artistCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const sortedGenres = Object.entries(genreCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+    const artistLabels = sortedArtists.map(artist => artist[0]);
+    const artistCountsData = sortedArtists.map(artist => artist[1]);
+
+    const genreLabels = sortedGenres.map(genre => genre[0]);
+    const genreCountsData = sortedGenres.map(genre => genre[1]);
+
+    // Top 5 Artists Pie Chart
+    new Chart(artistChartRef, {
       type: 'pie',
+      options: {
+        aspectRatio: 1,
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Top 5 Artists by Users',
+            font: {
+              size: 20,
+            },
+          },
+        },
+      },
       data: {
-        labels: genreLabels,
+        labels: artistLabels,
         datasets: [
           {
-            label: 'Genres',
-            data: genreCounts,
+            label: 'Number of Songs',
+            data: artistCountsData,
             backgroundColor: [
               'rgba(255, 99, 132, 0.2)',
               'rgba(54, 162, 235, 0.2)',
               'rgba(255, 206, 86, 0.2)',
               'rgba(75, 192, 192, 0.2)',
               'rgba(153, 102, 255, 0.2)',
-              'rgba(255, 159, 64, 0.2)',
             ],
             borderColor: [
               'rgba(255, 99, 132, 1)',
@@ -42,7 +77,48 @@ class ChartComponent extends Component {
               'rgba(255, 206, 86, 1)',
               'rgba(75, 192, 192, 1)',
               'rgba(153, 102, 255, 1)',
-              'rgba(255, 159, 64, 1)',
+            ],
+            borderWidth: 1,
+          },
+        ],
+      },
+    });
+
+        // Top 5 Genres Pie Chart
+    new Chart(genreChartRef, {
+      type: 'pie',
+      options: {
+        aspectRatio: 1,
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Top 5 Genres by Users',
+            font: {
+              size: 20,
+            },
+          },
+        },
+      },
+      data: {
+        labels: genreLabels,
+        datasets: [
+          {
+            label: 'Number of Songs',
+            data: genreCountsData,
+            backgroundColor: [
+              'rgba(255, 99, 132, 0.2)',
+              'rgba(54, 162, 235, 0.2)',
+              'rgba(255, 206, 86, 0.2)',
+              'rgba(75, 192, 192, 0.2)',
+              'rgba(153, 102, 255, 0.2)',
+            ],
+            borderColor: [
+              'rgba(255, 99, 132, 1)',
+              'rgba(54, 162, 235, 1)',
+              'rgba(255, 206, 86, 1)',
+              'rgba(75, 192, 192, 1)',
+              'rgba(153, 102, 255, 1)',
             ],
             borderWidth: 1,
           },
@@ -52,7 +128,12 @@ class ChartComponent extends Component {
   }
 
   render() {
-    return <canvas ref={this.chartRef} className="chart"/>;
+    return (
+      <div>
+        <canvas ref={this.artistChartRef} className="chart mb-3" />
+        <canvas ref={this.genreChartRef} className="chart" />
+      </div>
+    );
   }
 }
 

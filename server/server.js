@@ -112,6 +112,7 @@ app.get("/lyrics", async (req, res) => {
   res.json({ lyrics })
 })
  
+/*
 app.post("/queue", async (req, res) => {
   const trackUri = req.body.trackUri;
   const accessToken = req.body.accessToken;
@@ -126,7 +127,7 @@ app.post("/queue", async (req, res) => {
   }
  
   res.sendStatus(200);
-});
+});*/
  
 server.listen(3001, () => {
   console.log('Server listening on port 3001');

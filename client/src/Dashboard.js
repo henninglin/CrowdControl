@@ -9,6 +9,9 @@ import LikeDislike from "./LikeDislike";
 import Data from "./Data";
 import Participants from "./Participants";
 import History from "./History";
+import {auth, db} from "./firebase";
+import Level from "./Level";
+import { addDoc, collection, serverTimestamp, limit, orderBy, query, onSnapshot } from "firebase/firestore"; 
 
 const spotifyApi = new SpotifyWebApi({
   clientId: " df5386eb382b4286a239d80f6b301967",
@@ -21,18 +24,91 @@ export default function Dashboard({ code }) {
   const [playingTrack, setPlayingTrack] = useState();
   const [lyrics, setLyrics] = useState("");
   const [activeTab, setActiveTab] = useState("Home");
-
+  const [queuedSongs, setQueuedSongs] = useState([]);
+  const [selectedSongId, setSelectedSongId] = useState(null);
 
   function chooseTrack(track) {
     console.log("Selected track: ", track);
     setPlayingTrack(track);
     setSearch("");
     setLyrics("");
+
+    const partyKeyword = localStorage.getItem("partyKeyword");
+    const userId = auth.currentUser;
+    
+    //Add track to firebase
+    async function addTrackToFirestore() {
+      try {
+        const trackDetails = await spotifyApi.getTrack(track.uri.split(":")[2]);
+        const artistId = trackDetails.body.artists[0].id;
+
+        const genres = await getArtistGenres(artistId);
+
+        const partySongsRef = collection(db, "Parties", partyKeyword, "searchedSongs");
+  
+        const docRef = await addDoc(partySongsRef, {
+          name: track.title,
+          artist: track.artist,
+          uri: track.uri,
+          albumUrl: track.albumUrl,
+          user: userId.displayName,
+          timestamp: serverTimestamp(),
+          genre: genres,
+          score: 0
+        });
+  
+        console.log("Document written with ID: ", docRef.id);
+        console.log("Added song to database: ", track.title);
+        return docRef.id;
+      } catch (e) {
+        console.error("Error adding document: ", e);
+      }
+    }
+    
+    addTrackToFirestore().then((songId)=>{
+      setSelectedSongId(songId);
+      console.log(songId);
+    })
+  }
+
+  //Get Genres from track
+  async function getArtistGenres(artistId) {
+    try {
+      const artistDetails = await spotifyApi.getArtist(artistId);
+      return artistDetails.body.genres;
+    } catch (error) {
+      console.error("Error fetching artist genres:", error);
+      return [];
+    }
   }
 
   useEffect(() => {
     console.log("Access token:", accessToken);
   }, [accessToken]);
+
+  //Show queued songs as a card.
+  useEffect(() => {
+    const partyKeyword = localStorage.getItem("partyKeyword");
+  
+    if (partyKeyword) {
+      const partySongsRef = collection(db, "Parties", partyKeyword, "searchedSongs");
+  
+      const unsub = onSnapshot(
+        query(partySongsRef, orderBy("timestamp", "asc"), limit(3)),
+        (snapshot) => {
+          const queuedSongsData = [];
+          snapshot.forEach((doc) => {
+            queuedSongsData.push({ id: doc.id, ...doc.data() });
+          });
+          setQueuedSongs(queuedSongsData.slice(1));
+          console.log("All fetched songs: ", queuedSongsData);
+        },
+        (error) => console.error("Error fetching queued songs: ", error)
+      );
+       
+      return () => unsub();
+    }
+  }, []);
   
   //Used to show lyrics from the song playing
   useEffect(() => {
@@ -53,7 +129,8 @@ export default function Dashboard({ code }) {
     if (!accessToken) return console.log("No access token");
     spotifyApi.setAccessToken(accessToken);
   }, [accessToken]);
-
+  
+  //Search result, show title, image, artist.
   useEffect(() => {
     if (!search) return setSearchResults([]);
     if (!accessToken) return "No access";
@@ -100,7 +177,7 @@ export default function Dashboard({ code }) {
         <Nav>
           <Nav.Link active={activeTab === "Home"} onClick={() => setActiveTab("Home")}>Home</Nav.Link>
           <Nav.Link active={activeTab === "Lyrics"} onClick={() => setActiveTab("Lyrics")}>Lyrics</Nav.Link>
-          <Nav.Link active={activeTab === "Data"} onClick={() => setActiveTab("Data")}>Genre</Nav.Link>
+          <Nav.Link active={activeTab === "Data"} onClick={() => setActiveTab("Data")}>Data</Nav.Link>
           <Nav.Link active={activeTab === "History"} onClick={() => setActiveTab("History")}>Playlist</Nav.Link>
           <Nav.Link active={activeTab === "Participants"} onClick={() => setActiveTab("Participants")}>Users</Nav.Link>
           <Nav.Link onClick={handleLogout}>Exit</Nav.Link>
@@ -133,7 +210,7 @@ export default function Dashboard({ code }) {
                 <div style={{ width: '180px', height: '180px', margin: '0 auto' }}>
                   <img src={playingTrack.albumUrl} alt={playingTrack.title} style={{width: "100%", height: "100%", objectFit: 'cover'}}/>
                 </div>
-                <LikeDislike />
+                <LikeDislike songId={selectedSongId}/>
                 </div>
               )}
             </div>
@@ -163,8 +240,11 @@ export default function Dashboard({ code }) {
           </>
         )}
       </div>
+      <div className="justify-content-center align-items-center mb-2">
+        <Level/>
+      </div>
       <div>
-        <Player accessToken={accessToken} trackUri={playingTrack?.uri} />
+        <Player accessToken={accessToken}/>
       </div>
       
     </Container>

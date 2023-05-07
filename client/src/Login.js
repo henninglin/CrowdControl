@@ -6,11 +6,12 @@ import Form from 'react-bootstrap/Form';
 import Modal from 'react-bootstrap/Modal';
 import "./App.css"
 import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
-import { addDoc, setDoc, collection, getDoc, getDocs, doc } from 'firebase/firestore';
+import { setDoc, collection, getDoc, getDocs, doc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from './firebase';
 
 const AUTH_URL =
-  "https://accounts.spotify.com/authorize?client_id=df5386eb382b4286a239d80f6b301967&response_type=code&redirect_uri=http://localhost:3000&scope=streaming%20user-read-email%20user-read-private%20user-library-read%20user-library-modify%20user-read-playback-state%20user-modify-playback-state"
+  "https://accounts.spotify.com/authorize?client_id=df5386eb382b4286a239d80f6b301967&response_type=code&redirect_uri=http://localhost:3000&scope=streaming%20user-read-email%20user-read-private%20user-library-read%20user-library-modify%20user-read-playback-state%20user-modify-playback-state%20playlist-modify-public%20playlist-modify-private";
+
 
 export default function Login() {
 
@@ -24,6 +25,7 @@ export default function Login() {
 
   //Adds User to Party
   async function addUserToParty(input){
+    setShowButton(true);
     const userRef = collection(db, "Parties", input, "Users");
     const user = auth.currentUser;
 
@@ -45,9 +47,10 @@ export default function Login() {
     }
 
     try {
-      const docRef = await addDoc(userRef,{
+      const docRef = doc(userRef,user.uid);
+      await setDoc(docRef,{
         id: user.uid,
-        level: 0,
+        level: 1,
         score: 0,
         displayName: user.displayName
       });
@@ -116,10 +119,44 @@ export default function Login() {
     return signInWithPopup(auth, provider); 
   }
 
-  //handle google logout
-  const handleLogout = async () => {
-    await signOut(auth);
+  // Remove User from Party
+  async function removeUserFromParty(partyKeyword) {
+    const userRef = collection(db, "Parties", partyKeyword, "Users");
+    const user = auth.currentUser;
+
+    const docSnap = await getDocs(userRef);
+    let userDocId = null;
+
+    docSnap.forEach((e) => {
+      if (e.data().id === user.uid) {
+        userDocId = e.id;
+        return;
+      }
+    });
+
+    if (userDocId) {
+      try {
+        await deleteDoc(doc(userRef, userDocId));
+        console.log("User removed from the party");
+      } catch (e) {
+        console.error("Error removing user from the party: ", e);
+      }
+    } else {
+      console.log("User not found in the party");
+    }
+
+    // Remove partyKeyword from localStorage
+    localStorage.removeItem("partyKeyword");
   }
+
+  // handle google logout
+  const handleLogout = async () => {
+    const currentPartyKeyword = localStorage.getItem("partyKeyword");
+    if (currentPartyKeyword) {
+      await removeUserFromParty(currentPartyKeyword);
+    }
+    await signOut(auth);
+  };
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -135,30 +172,12 @@ export default function Login() {
     return unsubscribe;
   }, []);
 
-  // Fake it spotify button
-  useEffect(() =>{
-    function handleKeyDown(event){
-      if(event.key === "Escape"){
-        setShowButton(true);
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-
-  }, []);
+  
 
   return (
     <section className="h-100 gradient-form first">
       <div className="container py-5 h-100 login">
       <h1 className="display-1 d-flex user-select-none">Musicify</h1>
-      {showButton && (
-      <a className="btn btn-success btn-lg" href={AUTH_URL}>
-        Login using Spotify
-      </a>
-      )}
       <div className="music">
         <span className="stroke"></span>
         <span className="stroke"></span>
@@ -168,6 +187,11 @@ export default function Login() {
         <span className="stroke"></span>
         <span className="stroke"></span>
       </div>
+      {showButton && (
+      <a className="btn btn-success mt-3 mb-3" href={AUTH_URL}>
+        Login using Spotify
+      </a>
+      )}
       {!showSession && (
       <div className="m-5">
         <GoogleButton onClick={handleGoogle}/>
