@@ -27,7 +27,7 @@ const History = ({ accessToken }) => {
     
     const partyKeyword = localStorage.getItem('partyKeyword');
     const songsQueuedRef = collection(db, "Parties", partyKeyword, "searchedSongs");
-    const q = query(songsQueuedRef, orderBy("timestamp", "desc"));
+    const q = query(songsQueuedRef, orderBy("timestamp", "asc"));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetchedSongs = [];

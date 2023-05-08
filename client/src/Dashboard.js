@@ -11,10 +11,10 @@ import Participants from "./Participants";
 import History from "./History";
 import {auth, db} from "./firebase";
 import Level from "./Level";
-import { addDoc, collection, serverTimestamp, limit, orderBy, query, onSnapshot } from "firebase/firestore"; 
+import { addDoc, collection, serverTimestamp, updateDoc, limit, orderBy, query, onSnapshot, getDocs, where, doc, getDoc } from "firebase/firestore"; 
 
 const spotifyApi = new SpotifyWebApi({
-  clientId: " df5386eb382b4286a239d80f6b301967",
+  clientId: "df5386eb382b4286a239d80f6b301967",
 });
 
 export default function Dashboard({ code }) {
@@ -28,6 +28,7 @@ export default function Dashboard({ code }) {
   const [selectedSongId, setSelectedSongId] = useState(null);
 
   function chooseTrack(track) {
+
     console.log("Selected track: ", track);
     setPlayingTrack(track);
     setSearch("");
@@ -45,6 +46,15 @@ export default function Dashboard({ code }) {
         const genres = await getArtistGenres(artistId);
 
         const partySongsRef = collection(db, "Parties", partyKeyword, "searchedSongs");
+
+        const q = query(collection(db, "Parties", partyKeyword, "searchedSongs"), where("uri", "==", track.uri));
+
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          console.log("Track already in queue");
+          alert("Song already in queue");
+          return;
+        }
   
         const docRef = await addDoc(partySongsRef, {
           name: track.title,
@@ -81,6 +91,52 @@ export default function Dashboard({ code }) {
       return [];
     }
   }
+
+  async function createPlaylist(accessToken) {
+    spotifyApi.setAccessToken(accessToken);
+    const partyKeyword = localStorage.getItem("partyKeyword");
+    console.log("Party keyword:", partyKeyword);
+    const partyDocRef = doc(db, "Parties", partyKeyword);
+    const docSnapshot = await getDoc(partyDocRef);
+    console.log("Document snapshot:", docSnapshot);
+
+    if (!docSnapshot.exists || !docSnapshot.data().playlist) {
+
+      //Get party details from firebase
+      const partyData = docSnapshot.data()
+      const partyName = partyData.name;
+      const partyDate = partyData.date;
+
+      // Create the playlist
+      const playlistName = `${partyName} - ${partyDate}`;
+      const playlistData = await spotifyApi.createPlaylist(playlistName, { 'public': true })
+      const playlistId = playlistData.body.id;
+
+      // Update the Firebase document with the new playlist field
+      await updateDoc(partyDocRef, { playlist: playlistId })
+      .then(() => {
+        console.log("Document updated successfully");
+      })
+      .catch((error) =>{
+        console.error("Error updating document: ", error);
+      });
+
+      console.log("Playlist created in firebase and spotify", playlistId);
+      return playlistId;
+
+    } else {
+      console.log("Playlist for the party already exists");
+      console.log("Playlist data:", docSnapshot.data());
+      return docSnapshot.data().playlist;
+    }
+  }
+
+  useEffect(() => {
+    if(accessToken){
+      console.log("Creating playlist");
+      createPlaylist();
+    }
+  }, [accessToken]);
 
   useEffect(() => {
     console.log("Access token:", accessToken);
@@ -244,7 +300,7 @@ export default function Dashboard({ code }) {
         <Level/>
       </div>
       <div>
-        <Player accessToken={accessToken}/>
+        {/* <Player accessToken={accessToken}/> */}
       </div>
       
     </Container>

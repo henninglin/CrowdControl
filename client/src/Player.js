@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import SpotifyPlayer from 'react-spotify-web-playback';
 import { db } from './firebase';
 import { query, orderBy, limit, collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
@@ -9,6 +9,7 @@ export default function Player({ accessToken }) {
   const [currentSongId, setCurrentSongId] = useState(null);
 
   const partyKeyword = localStorage.getItem("partyKeyword");
+  const playerStateRef = useRef(null);
 
   useEffect(() => {
     const fetchSongs = async () => {
@@ -30,7 +31,25 @@ export default function Player({ accessToken }) {
     if (partyKeyword) {
       fetchSongs();
     }
-  }, [partyKeyword, trackUri]);  // Add trackUri to dependency array
+  }, [partyKeyword, trackUri]);
+
+  useEffect(() => {
+    const checkSongEnd = () => {
+      const state = playerStateRef.current;
+      if (state && !state.isPlaying && state.position >= state.duration - 0.5) {
+        console.log("Finish song");
+        deleteSong();
+        setTrackUri(null);
+        // Handle song end logic here, e.g., delete the song and set trackUri to null to fetch a new song
+      }
+    };
+
+    const intervalId = setInterval(checkSongEnd, 1000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, []);
 
   const deleteSong = async () => {
     // Delete the song after it has been played
@@ -43,14 +62,6 @@ export default function Player({ accessToken }) {
     // When the player state changes, check if it's no longer playing
     if (!state.isPlaying) {
       setPlay(false);
-
-      // If the song has ended (i.e., position is approximately equal to duration), 
-      // delete the song and set trackUri to null to fetch a new song
-      if (state.position >= state.duration - 1) {
-        console.log("Finish song");
-        deleteSong();
-        setTrackUri(null);
-      }
     }
     // If the current track URI is different from the track URI in the state, update the state
     else if (state.track.uri !== trackUri) {
