@@ -64,24 +64,36 @@ export default function Dashboard({ code }) {
           user: userId.displayName,
           timestamp: serverTimestamp(),
           genre: genres,
-          score: 0
+          score: 0,
+          priority: 0,
         });
-  
+        
         console.log("Document written with ID: ", docRef.id);
         console.log("Added song to database: ", track.title);
+
         return docRef.id;
       } catch (e) {
         console.error("Error adding document: ", e);
       }
     }
     
-    addTrackToFirestore().then((songId)=>{
+    addTrackToFirestore().then(async(songId)=>{
       setSelectedSongId(songId);
       console.log(songId);
-    })
+
+      // Fetch the playlistId from Firebase and call addTrackToPlaylist()
+      const partyKeyword = localStorage.getItem("partyKeyword");
+      const playlistId = await fetchPlaylistId(partyKeyword);
+
+      if(playlistId){
+        addTrackToPlaylist(playlistId, track.uri)
+      } else {
+        console.error("Could not fetch playlistId");
+      }
+    });
   }
 
-  //Get Genres from track
+  //Get genres from track
   async function getArtistGenres(artistId) {
     try {
       const artistDetails = await spotifyApi.getArtist(artistId);
@@ -92,6 +104,7 @@ export default function Dashboard({ code }) {
     }
   }
 
+  //Create playlist in Spotify
   async function createPlaylist(accessToken) {
     spotifyApi.setAccessToken(accessToken);
     const partyKeyword = localStorage.getItem("partyKeyword");
@@ -128,6 +141,33 @@ export default function Dashboard({ code }) {
       console.log("Playlist for the party already exists");
       console.log("Playlist data:", docSnapshot.data());
       return docSnapshot.data().playlist;
+    }
+  }
+
+  //Add song to Spotify
+  async function addTrackToPlaylist(playlistId, trackUri) {
+    try {
+      const response = await spotifyApi.addTracksToPlaylist(playlistId, [trackUri]);
+      console.log("Song added to spotify: ", response);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  //Fetch playlist variable from firebase
+  async function fetchPlaylistId(partyKeyword) {
+    try {
+      const partyDocRef = doc(db, "Parties", partyKeyword);
+      const docSnapshot = await getDoc(partyDocRef);
+  
+      if (docSnapshot.exists()) {
+        const playlistId = docSnapshot.data().playlist;
+        return playlistId;
+      } else {
+        console.error("Party document does not exist");
+      }
+    } catch (err) {
+      console.error("Error fetching playlistId: ", err);
     }
   }
 
@@ -217,6 +257,7 @@ export default function Dashboard({ code }) {
     return () => (cancel = true);
   }, [search, accessToken]);
 
+  //Logout of the app
   function handleLogout() {
     localStorage.removeItem("spotify-auth")
     window.location = "/";
