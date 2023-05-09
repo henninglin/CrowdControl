@@ -62,7 +62,7 @@ const ParticipantsList = () => {
   <div>Loading ...</div>
   ):(
     <div>
-      <h5 className="mb-3 mt-3"> {currentParty.PartyName}</h5>
+      <h5 className="mb-3 mt-3"> {currentParty.name}</h5>
       <p className="mb-3 mt-3">Keyword: {partyKeyword}</p>
       <p>{currentParty.Date}</p>
       <h5 className="mb-2">Participants:</h5>

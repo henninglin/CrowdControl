@@ -32,6 +32,23 @@ const LikeDislike = ({ songId }) => {
   }, [songId]);
 
   useEffect(() => {
+    // Load the liked and disliked states from the local storage
+    const likedSongs = JSON.parse(localStorage.getItem('likedSongs')) || {};
+    const dislikedSongs = JSON.parse(localStorage.getItem('dislikedSongs')) || {};
+  
+    if (likedSongs[songId]) {
+      setLiked(true);
+      setDisliked(false);
+    } else if (dislikedSongs[songId]) {
+      setDisliked(true);
+      setLiked(false);
+    } else{
+      setLiked(false);
+      setDisliked(false);
+    }
+  }, [songId]);
+
+  useEffect(() => {
     if (songChanged) {
       // Reset the like and dislike state when the songId changes
       setLiked(false);
@@ -77,6 +94,10 @@ const LikeDislike = ({ songId }) => {
     console.log("handleLike called");
     if (!songId || liked || disliked) return;
     
+    const likedSongs = JSON.parse(localStorage.getItem('likedSongs')) || {};
+    likedSongs[songId] = true;
+    localStorage.setItem('likedSongs', JSON.stringify(likedSongs));
+
     await updateLikesDislikes(true);
     setLiked(true);
     setDisliked(false);
@@ -85,7 +106,11 @@ const LikeDislike = ({ songId }) => {
   const handleDislike = async () => {
     console.log("handleDislike called");
     if (!songId || disliked || liked) return;
-  
+
+    const dislikedSongs = JSON.parse(localStorage.getItem('dislikedSongs')) || {};
+    dislikedSongs[songId] = true;
+    localStorage.setItem('dislikedSongs', JSON.stringify(dislikedSongs));
+   
     await updateLikesDislikes(false);
     setLiked(false);
     setDisliked(true);

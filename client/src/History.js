@@ -11,7 +11,6 @@ const History = ({ accessToken }) => {
   const [playlists, setPlaylists] = useState([]);
   const [queuedSongs, setQueuedSongs] = useState([]);
 
-
   useEffect(() => {
     spotifyApi.setAccessToken(accessToken);
 

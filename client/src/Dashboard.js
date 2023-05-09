@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import useAuth from "./useAuth";
 import Player from "./Player";
 import TrackSearchResult from "./TrackSearchResult";
-import { Container, Form, Navbar, Nav } from "react-bootstrap";
+import { Container, Form, Navbar, Nav, Carousel } from "react-bootstrap";
 import SpotifyWebApi from "spotify-web-api-node";
 import axios from "axios";
 import LikeDislike from "./LikeDislike";
@@ -11,7 +11,7 @@ import Participants from "./Participants";
 import History from "./History";
 import {auth, db} from "./firebase";
 import Level from "./Level";
-import { addDoc, collection, serverTimestamp, updateDoc, limit, orderBy, query, onSnapshot, getDocs, where, doc, getDoc } from "firebase/firestore"; 
+import { addDoc, collection, serverTimestamp, updateDoc, limit, orderBy, query, onSnapshot, getDocs, where, doc, getDoc, deleteDoc } from "firebase/firestore"; 
 
 const spotifyApi = new SpotifyWebApi({
   clientId: "df5386eb382b4286a239d80f6b301967",
@@ -55,6 +55,8 @@ export default function Dashboard({ code }) {
           alert("Song already in queue");
           return;
         }
+
+        const songDuration = trackDetails.body.duration_ms / 1000;
   
         const docRef = await addDoc(partySongsRef, {
           name: track.title,
@@ -66,6 +68,7 @@ export default function Dashboard({ code }) {
           genre: genres,
           score: 0,
           priority: 0,
+          duration: songDuration
         });
         
         console.log("Document written with ID: ", docRef.id);
@@ -171,6 +174,22 @@ export default function Dashboard({ code }) {
     }
   }
 
+  async function deleteSong(songId) {
+    const partyKeyword = localStorage.getItem("partyKeyword");
+    const songRef = doc(db, "Parties", partyKeyword, "searchedSongs", songId);
+  
+    try {
+      await deleteDoc(songRef);
+      console.log(`Deleted song with id: ${songId}`);
+    } catch (error) {
+      console.error(`Error deleting song: ${error}`);
+    }
+  }
+
+  function handleSongFeedback(song, isLiked) {
+    deleteSong(song.id);
+  }
+
   useEffect(() => {
     if(accessToken){
       console.log("Creating playlist");
@@ -182,7 +201,7 @@ export default function Dashboard({ code }) {
     console.log("Access token:", accessToken);
   }, [accessToken]);
 
-  //Show queued songs as a card.
+  //Show queued songs as a carousel.
   useEffect(() => {
     const partyKeyword = localStorage.getItem("partyKeyword");
   
@@ -190,13 +209,13 @@ export default function Dashboard({ code }) {
       const partySongsRef = collection(db, "Parties", partyKeyword, "searchedSongs");
   
       const unsub = onSnapshot(
-        query(partySongsRef, orderBy("timestamp", "asc"), limit(3)),
+        query(partySongsRef, orderBy("timestamp", "asc")),
         (snapshot) => {
           const queuedSongsData = [];
           snapshot.forEach((doc) => {
             queuedSongsData.push({ id: doc.id, ...doc.data() });
           });
-          setQueuedSongs(queuedSongsData.slice(1));
+          setQueuedSongs(queuedSongsData);
           console.log("All fetched songs: ", queuedSongsData);
         },
         (error) => console.error("Error fetching queued songs: ", error)
@@ -210,7 +229,7 @@ export default function Dashboard({ code }) {
   useEffect(() => {
     if (!playingTrack) return setLyrics("Search a song to display lyrics");
     axios
-      .get("http://localhost:3001/lyrics", {
+      .get("https://musicify-lin.herokuapp.com/lyrics", {
         params: {
           track: playingTrack.title,
           artist: playingTrack.artist,
@@ -300,15 +319,29 @@ export default function Dashboard({ code }) {
         {searchResults.length === 0 && (
           <>{activeTab === "Home" && (
             <div className="d-flex justify-content-center align-items-center mb-2">
-              {playingTrack && (
-                <div className="justify-content-center">
-                  <h4 style= {{ textAlign: 'center' }}>{playingTrack.title}</h4>
-                  <p className="text-muted" style= {{ textAlign: 'center' }}>{playingTrack.artist}</p>
-                <div style={{ width: '180px', height: '180px', margin: '0 auto' }}>
-                  <img src={playingTrack.albumUrl} alt={playingTrack.title} style={{width: "100%", height: "100%", objectFit: 'cover'}}/>
-                </div>
-                <LikeDislike songId={selectedSongId}/>
-                </div>
+              {queuedSongs.length ? (
+                <Carousel indicators={false} variant="dark">
+                 {queuedSongs.map((song, idx) => (
+                  <Carousel.Item key={idx}>
+                    <div className="d-flex justify-content-center align-items-center mb-2">
+                      <div className="justify-content-center">
+                        <h4 style={{ textAlign: 'center' }}>{song.name}</h4>
+                        <p className="text-muted" style={{ textAlign: 'center' }}>{song.artist}</p>
+                        <div style={{ width: '200px', height: '200px', margin: '0 auto' }}>
+                          <img
+                            src={song.albumUrl}
+                            alt={song.name}
+                            style={{ width: "100%", height: "100%", objectFit: 'cover' }}
+                          />
+                        </div>
+                        <LikeDislike songId={song.id}/>
+                      </div>
+                    </div>
+                  </Carousel.Item>
+                ))}
+                </Carousel>
+              ) : (
+                <p>No songs queued yet</p>
               )}
             </div>
             )}
@@ -341,7 +374,7 @@ export default function Dashboard({ code }) {
         <Level/>
       </div>
       <div>
-        {/* <Player accessToken={accessToken}/> */}
+        {/*<Player accessToken={accessToken}/>*/}
       </div>
       
     </Container>
