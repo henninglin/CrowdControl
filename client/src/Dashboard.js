@@ -125,7 +125,7 @@ export default function Dashboard({ code }) {
 
       // Create the playlist
       const playlistName = `${partyName} - ${partyDate}`;
-      const playlistData = await spotifyApi.createPlaylist(playlistName, { 'public': true })
+      const playlistData = await spotifyApi.createPlaylist(playlistName, { 'public': true, 'collaborative': true })
       const playlistId = playlistData.body.id;
 
       // Update the Firebase document with the new playlist field
