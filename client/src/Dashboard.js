@@ -57,6 +57,9 @@ export default function Dashboard({ code }) {
         }
 
         const songDuration = trackDetails.body.duration_ms / 1000;
+        const userRef = collection(db, "Parties", partyKeyword, "Users");
+        const userSnap = await getDoc(userRef);
+        const userLevel = userSnap.data().level
   
         const docRef = await addDoc(partySongsRef, {
           name: track.title,
@@ -67,7 +70,7 @@ export default function Dashboard({ code }) {
           timestamp: serverTimestamp(),
           genre: genres,
           score: 0,
-          priority: 0,
+          priority: userLevel,
           duration: songDuration
         });
         
@@ -89,7 +92,18 @@ export default function Dashboard({ code }) {
       const playlistId = await fetchPlaylistId(partyKeyword);
 
       if(playlistId){
-        addTrackToPlaylist(playlistId, track.uri)
+
+        //Fetch the song with highest priority
+        const partySongsRef = collection(db, "Parties", partyKeyword, "searchedSongs");
+        const songQuery = query(partySongsRef, where("addedToPlaylist", "==", false), orderBy("priority", "desc"), orderBy("timestamp", "asc"), limit(1));
+        const songSnap = await getDocs(songQuery);
+        const highestPrioritySong = songSnap.docs[0];
+
+        addTrackToPlaylist(playlistId, highestPrioritySong.data().uri);
+        // Update the song in Firestore to mark it as added to the playlist
+        await updateDoc(doc(partySongsRef, highestPrioritySong.id), {
+          addedToPlaylist: true
+        });
       } else {
         console.error("Could not fetch playlistId");
       }
@@ -125,7 +139,7 @@ export default function Dashboard({ code }) {
 
       // Create the playlist
       const playlistName = `${partyName} - ${partyDate}`;
-      const playlistData = await spotifyApi.createPlaylist(playlistName, { 'public': true })
+      const playlistData = await spotifyApi.createPlaylist(playlistName, { 'public': true, 'collaborative': true })
       const playlistId = playlistData.body.id;
 
       // Update the Firebase document with the new playlist field
