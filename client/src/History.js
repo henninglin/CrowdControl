@@ -49,7 +49,7 @@ const History = ({ accessToken }) => {
           </li>
         ))}
       </ul>
-      <h5 className="mt-3 mb-3">Previous Playlists</h5>
+      <h5 className="mt-3 mb-3">Your Playlists</h5>
       <ul style={{ listStyle: 'none', padding: 0 }}>
         {playlists.map((playlist) => (
           <li key={playlist.id} className="mb-3">

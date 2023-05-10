@@ -89,7 +89,23 @@ export default function Dashboard({ code }) {
       const playlistId = await fetchPlaylistId(partyKeyword);
 
       if(playlistId){
-        addTrackToPlaylist(playlistId, track.uri)
+        const partySongsRef = collection(db, "Parties", partyKeyword, "searchedSongs");
+        const songQuery = query(partySongsRef, where("addedToPlaylist", "==", false), orderBy("timestamp", "asc"), limit(1));
+        const songSnap = await getDocs(songQuery);
+
+        if (!songSnap.empty) {
+          const oldestSong = songSnap.docs[0];
+          // Add the song with the oldest timestamp to the Spotify playlist
+          addTrackToPlaylist(playlistId, oldestSong.data().uri);
+    
+          // Update the song in Firestore to mark it as added to the playlist
+          await updateDoc(doc(partySongsRef, oldestSong.id), {
+            addedToPlaylist: true
+          });
+        } else {
+          console.error("Could not fetch song with the oldest timestamp");
+        }
+
       } else {
         console.error("Could not fetch playlistId");
       }
@@ -184,10 +200,6 @@ export default function Dashboard({ code }) {
     } catch (error) {
       console.error(`Error deleting song: ${error}`);
     }
-  }
-
-  function handleSongFeedback(song, isLiked) {
-    deleteSong(song.id);
   }
 
   useEffect(() => {
