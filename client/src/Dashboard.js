@@ -110,6 +110,48 @@ export default function Dashboard({ code }) {
     });
   }
 
+  useEffect(() => {
+    // Execute the function immediately upon mounting
+    executeFunction();
+  
+    // Then set it to execute every 2 minutes
+    const intervalId = setInterval(() => {
+      executeFunction();
+    }, 5000); // 2 minutes in milliseconds
+  
+    // Clear interval on component unmount
+    return () => clearInterval(intervalId);
+  }, []);
+
+  async function executeFunction() {
+
+    // Fetch the playlistId from Firebase and call addTrackToPlaylist()
+    const partyKeyword = localStorage.getItem("partyKeyword");
+    const playlistId = await fetchPlaylistId(partyKeyword);
+  
+    if(playlistId){
+      const partySongsRef = collection(db, "Parties", partyKeyword, "searchedSongs");
+      const songQuery = query(partySongsRef, where("addedToPlaylist", "==", false), orderBy("priority","desc"), orderBy("timestamp", "asc"), limit(1));
+      const songSnap = await getDocs(songQuery);
+  
+      if (!songSnap.empty) {
+        const oldestSong = songSnap.docs[0];
+        // Add the song with the oldest timestamp to the Spotify playlist
+        addTrackToPlaylist(playlistId, oldestSong.data().uri);
+    
+        // Update the song in Firestore to mark it as added to the playlist
+        await updateDoc(doc(partySongsRef, oldestSong.id), {
+          addedToPlaylist: true
+        });
+      } else {
+        console.error("Could not fetch song with the oldest timestamp");
+      }
+  
+    } else {
+      console.error("Could not fetch playlistId");
+    }
+  }
+
   //Get genres from track
   async function getArtistGenres(artistId) {
     try {
