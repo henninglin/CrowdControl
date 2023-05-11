@@ -136,8 +136,8 @@ export default function Dashboard({ code }) {
 
       //Get party details from firebase
       const partyData = docSnapshot.data()
-      const partyName = partyData.name;
-      const partyDate = partyData.date;
+      const partyName = partyData.partyName;
+      const partyDate = partyData.Date;
 
       // Create the playlist
       const playlistName = `${partyName} - ${partyDate}`;
