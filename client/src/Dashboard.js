@@ -271,6 +271,8 @@ export default function Dashboard({ code }) {
         await updateDoc(doc(partySongsRef, oldestSong.id), {
           addedToPlaylist: true
         });
+
+        console.log("Added to spotify");
       } else {
         console.error("Could not fetch song with the oldest timestamp");
       }
