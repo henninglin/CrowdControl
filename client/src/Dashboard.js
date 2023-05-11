@@ -241,7 +241,7 @@ export default function Dashboard({ code }) {
   useEffect(() => {
     if (!playingTrack) return setLyrics("Search a song to display lyrics");
     axios
-      .get("https://musicify-lin.herokuapp.com/lyrics", {
+      .get("localhost:3000/lyrics", {
         params: {
           track: playingTrack.title,
           artist: playingTrack.artist,
