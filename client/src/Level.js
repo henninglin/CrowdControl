@@ -36,7 +36,7 @@ const Level = () => {
           setScore(data.score);
           setLevel(data.level);
           console.log("Score:", data.score); 
-          if (data.score >= 100) {
+          if (data.score >= 10) {
             setLevel(data.level + 1);
             setScore(0);
             if(doc.ref){
