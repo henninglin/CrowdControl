@@ -26,8 +26,9 @@ const History = ({ accessToken }) => {
       {currentPlaylistId && (
         <iframe
           title="Spotify Playlist"
+          className="mt-3"
           src={`https://open.spotify.com/embed/playlist/${currentPlaylistId}`}
-          width="300"
+          width="500"
           height="380"
           frameborder="0"
           allowtransparency="true"
@@ -39,4 +40,5 @@ const History = ({ accessToken }) => {
 };
 
 export default History;
+
 
