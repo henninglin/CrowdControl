@@ -1,64 +1,43 @@
 import { useState, useEffect } from "react";
-import SpotifyWebApi from "spotify-web-api-node";
-import { collection, orderBy, query, onSnapshot } from "firebase/firestore";
-import { db } from "./firebase"; 
-
-const spotifyApi = new SpotifyWebApi({
-  clientId: "df5386eb382b4286a239d80f6b301967",
-});
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "./firebase";
 
 const History = ({ accessToken }) => {
-  const [playlists, setPlaylists] = useState([]);
-  const [queuedSongs, setQueuedSongs] = useState([]);
+  const [currentPlaylistId, setCurrentPlaylistId] = useState(null);
 
   useEffect(() => {
-    spotifyApi.setAccessToken(accessToken);
+    const fetchPlaylistId = async () => {
+      const partyKeyword = localStorage.getItem('partyKeyword');
+      const docRef = doc(db, "Parties", partyKeyword);
+      const docSnap = await getDoc(docRef);
 
-    spotifyApi
-      .getUserPlaylists()
-      .then((data) => {
-        setPlaylists(data.body.items);
-      })
-      .catch((err) => {
-        console.error(err);
-      });
+      if (docSnap.exists()) {
+        setCurrentPlaylistId(docSnap.data().playlist);
+      } else {
+        console.log("No such document!");
+      }
+    };
 
-    
-    const partyKeyword = localStorage.getItem('partyKeyword');
-    const songsQueuedRef = collection(db, "Parties", partyKeyword, "searchedSongs");
-    const q = query(songsQueuedRef, orderBy("timestamp", "asc"));
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetchedSongs = [];
-      snapshot.forEach((doc) => {
-        fetchedSongs.push({ id: doc.id, ...doc.data() });
-      });
-      setQueuedSongs(fetchedSongs);
-    });
-
-    return unsubscribe;
-  }, [accessToken]);
+    fetchPlaylistId();
+  }, []);
 
   return (
     <div>
-      <h5 className="mt-3 mb-3">Current Queue:</h5>
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        {queuedSongs.map((song) => (
-          <li key={song.id} className="mb-3">
-            {song.name} by {song.artist}
-          </li>
-        ))}
-      </ul>
-      <h5 className="mt-3 mb-3">Your Playlists</h5>
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        {playlists.map((playlist) => (
-          <li key={playlist.id} className="mb-3">
-           <a href={`https://open.spotify.com/playlist/${playlist.id}`} target="_blank" rel="noopener noreferrer" className="btn btn-success">{playlist.name}</a>
-          </li>
-        ))}
-      </ul>
+      {currentPlaylistId && (
+        <iframe
+          title="Spotify Playlist"
+          className="mt-3"
+          src={`https://open.spotify.com/embed/playlist/${currentPlaylistId}`}
+          width="500"
+          height="380"
+          frameborder="0"
+          allowtransparency="true"
+          allow="encrypted-media"
+        ></iframe>
+      )}
     </div>
   );
 };
 
 export default History;
+
