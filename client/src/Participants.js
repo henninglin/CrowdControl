@@ -62,8 +62,8 @@ const ParticipantsList = () => {
   <div>Loading ...</div>
   ):(
     <div>
-      <h5>Keyword: {partyKeyword}</h5>
-      <p className="mb-3 mt-3"> {currentParty.PartyName}</p>
+      <h5 className="mb-3 mt-3"> {currentParty.PartyName}</h5>
+      <p className="mb-3 mt-3">Keyword: {partyKeyword}</p>
       <p>{currentParty.Date}</p>
       <h5 className="mb-2">Participants:</h5>
       <ul style={{ listStyleType: "none", padding: 0 }}>

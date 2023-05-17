@@ -51,6 +51,21 @@ h5 {
   max-height: 100%;
 }
 
+.absolute-bottom {
+  position: sticky;
+  border-radius: 2px;
+  border: 1px solid #0000;
+  bottom: 0;
+  background: white;
+  z-index: 1; /* Make it appear on top of other elements */
+}
+
+.col-1 {
+  flex: 0 0 auto;
+  width: 8%;
+  margin-left: 8px;
+}
+
 .dashboard {
   display: flex;
   justify-content: center;

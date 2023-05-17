@@ -47,7 +47,7 @@ export default function Login() {
     try {
       const docRef = await addDoc(userRef,{
         id: user.uid,
-        level: 0,
+        level: 1,
         score: 0,
         displayName: user.displayName
       });

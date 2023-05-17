@@ -11,6 +11,7 @@ import Participants from "./Participants";
 import History from "./History";
 import {auth, db} from "./firebase";
 import Level from "./Level";
+import Leaderboard from "./Leaderboard"
 import { addDoc, collection, serverTimestamp, updateDoc, limit, orderBy, query, onSnapshot, getDocs, where, doc, getDoc, deleteDoc } from "firebase/firestore"; 
 
 const spotifyApi = new SpotifyWebApi({
@@ -68,8 +69,7 @@ export default function Dashboard({ code }) {
           genre: genres,
           score: 0,
           priority: 0,
-          duration: songDuration,
-          addedToPlaylist: false
+          duration: songDuration
         });
         
         console.log("Document written with ID: ", docRef.id);
@@ -137,12 +137,12 @@ export default function Dashboard({ code }) {
 
       //Get party details from firebase
       const partyData = docSnapshot.data()
-      const partyName = partyData.PartyName;
-      const partyDate = partyData.Date;
+      const partyName = partyData.name;
+      const partyDate = partyData.date;
 
       // Create the playlist
       const playlistName = `${partyName} - ${partyDate}`;
-      const playlistData = await spotifyApi.createPlaylist(playlistName, { 'public': true })
+      const playlistData = await spotifyApi.createPlaylist(playlistName, { 'public': true, 'collaborative': true })
       const playlistId = playlistData.body.id;
 
       // Update the Firebase document with the new playlist field
@@ -241,7 +241,6 @@ export default function Dashboard({ code }) {
   useEffect(() => {
     // Execute the function immediately upon mounting
     autoAdd();
-    console.log("Added song to playlist")
   
     // Then set it to execute every minute
     const intervalId = setInterval(() => {
@@ -271,8 +270,6 @@ export default function Dashboard({ code }) {
         await updateDoc(doc(partySongsRef, oldestSong.id), {
           addedToPlaylist: true
         });
-
-        console.log("Added to spotify");
       } else {
         console.error("Could not fetch song with the oldest timestamp");
       }
@@ -351,7 +348,8 @@ export default function Dashboard({ code }) {
           <Nav.Link active={activeTab === "Home"} onClick={() => setActiveTab("Home")}>Home</Nav.Link>
           <Nav.Link active={activeTab === "Lyrics"} onClick={() => setActiveTab("Lyrics")}>Lyrics</Nav.Link>
           <Nav.Link active={activeTab === "Data"} onClick={() => setActiveTab("Data")}>Data</Nav.Link>
-          <Nav.Link active={activeTab === "History"} onClick={() => setActiveTab("History")}>Playlist</Nav.Link>
+          <Nav.Link active={activeTab === "Leaderboard"} onClick={() => setActiveTab("Leaderboard")}>Rank</Nav.Link>
+          <Nav.Link active={activeTab === "Playlist"} onClick={() => setActiveTab("Playlist")}>Playlist</Nav.Link>
           <Nav.Link active={activeTab === "Participants"} onClick={() => setActiveTab("Participants")}>Users</Nav.Link>
           <Nav.Link onClick={handleLogout}>Exit</Nav.Link>
         </Nav>
@@ -414,12 +412,17 @@ export default function Dashboard({ code }) {
                 <Data/>
               </div>
             )}
+            {activeTab === "Leaderboard" && (
+              <div className="d-flex justify-content-center align-items-center">
+                <Leaderboard/>
+              </div>
+            )}
             {activeTab === "Participants" && (
               <div className="d-flex justify-content-center align-items-center">
                 <Participants/>
               </div>
             )}
-            {activeTab === "History" && (
+            {activeTab === "Playlist" && (
               <div className="d-flex justify-content-center align-items-center">
                 <History accessToken={accessToken}/>
               </div>
