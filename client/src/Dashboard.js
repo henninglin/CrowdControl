@@ -3,6 +3,9 @@ import useAuth from "./useAuth";
 import Player from "./Player";
 import TrackSearchResult from "./TrackSearchResult";
 import { Container, Form, Navbar, Nav, Carousel } from "react-bootstrap";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faHome, faChartLine, faTrophy, faUsers, faSignOutAlt, faMicrophone} from '@fortawesome/free-solid-svg-icons'
+import { faSpotify } from '@fortawesome/free-brands-svg-icons';
 import SpotifyWebApi from "spotify-web-api-node";
 import axios from "axios";
 import LikeDislike from "./LikeDislike";
@@ -345,13 +348,13 @@ export default function Dashboard({ code }) {
       <Navbar className="justify-content-between">
         <Navbar.Brand>Musicify</Navbar.Brand>
         <Nav>
-          <Nav.Link active={activeTab === "Home"} onClick={() => setActiveTab("Home")}>Home</Nav.Link>
-          <Nav.Link active={activeTab === "Lyrics"} onClick={() => setActiveTab("Lyrics")}>Lyrics</Nav.Link>
-          <Nav.Link active={activeTab === "Data"} onClick={() => setActiveTab("Data")}>Data</Nav.Link>
-          <Nav.Link active={activeTab === "Leaderboard"} onClick={() => setActiveTab("Leaderboard")}>Rank</Nav.Link>
-          <Nav.Link active={activeTab === "Playlist"} onClick={() => setActiveTab("Playlist")}>Playlist</Nav.Link>
-          <Nav.Link active={activeTab === "Participants"} onClick={() => setActiveTab("Participants")}>Users</Nav.Link>
-          <Nav.Link onClick={handleLogout}>Exit</Nav.Link>
+          <Nav.Link active={activeTab === "Home"} onClick={() => setActiveTab("Home")}><FontAwesomeIcon icon={faHome} size="lg"/></Nav.Link>
+          <Nav.Link active={activeTab === "Lyrics"} onClick={() => setActiveTab("Lyrics")}><FontAwesomeIcon icon={faMicrophone} size="lg"/></Nav.Link>
+          <Nav.Link active={activeTab === "Data"} onClick={() => setActiveTab("Data")}><FontAwesomeIcon icon={faChartLine} size="lg"/></Nav.Link>
+          <Nav.Link active={activeTab === "Leaderboard"} onClick={() => setActiveTab("Leaderboard")}><FontAwesomeIcon icon={faTrophy} size="lg"/></Nav.Link>
+          <Nav.Link active={activeTab === "Playlist"} onClick={() => setActiveTab("Playlist")}><FontAwesomeIcon icon={faSpotify} size="lg"/></Nav.Link>
+          <Nav.Link active={activeTab === "Participants"} onClick={() => setActiveTab("Participants")}><FontAwesomeIcon icon={faUsers} size="lg"/></Nav.Link>
+          <Nav.Link onClick={handleLogout}><FontAwesomeIcon icon={faSignOutAlt} size="lg"/></Nav.Link>
         </Nav>
       </Navbar>
       <Form.Control
