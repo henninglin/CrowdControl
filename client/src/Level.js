@@ -12,6 +12,7 @@ const Level = () => {
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(user => {
+      console.log("User in onAuth", user);
       if (user) {
         setCurrentUser(user);
         setIsLoading(false);

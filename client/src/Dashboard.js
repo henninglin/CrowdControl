@@ -137,12 +137,12 @@ export default function Dashboard({ code }) {
 
       //Get party details from firebase
       const partyData = docSnapshot.data()
-      const partyName = partyData.partyName;
+      const partyName = partyData.PartyName;
       const partyDate = partyData.Date;
 
       // Create the playlist
       const playlistName = `${partyName} - ${partyDate}`;
-      const playlistData = await spotifyApi.createPlaylist(playlistName, { 'public': true, 'collaborative': true })
+      const playlistData = await spotifyApi.createPlaylist(playlistName, { 'public': true })
       const playlistId = playlistData.body.id;
 
       // Update the Firebase document with the new playlist field

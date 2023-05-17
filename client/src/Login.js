@@ -5,8 +5,8 @@ import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import Modal from 'react-bootstrap/Modal';
 import "./App.css"
-import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
-import { addDoc, setDoc, collection, getDoc, getDocs, doc } from 'firebase/firestore';
+import { GoogleAuthProvider, signInWithPopup, signOut, signInAnonymously, updateProfile } from 'firebase/auth';
+import { addDoc, setDoc, collection, getDoc, getDocs, doc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from './firebase';
 
 const AUTH_URL = "https://accounts.spotify.com/authorize?client_id=df5386eb382b4286a239d80f6b301967&response_type=code&redirect_uri=http://localhost:3000&scope=streaming%20user-read-email%20user-read-private%20user-library-read%20user-library-modify%20user-read-playback-state%20user-modify-playback-state%20playlist-modify-public%20playlist-modify-private";
@@ -23,9 +23,10 @@ export default function Login() {
 
   //Adds User to Party
   async function addUserToParty(input){
+    setShowButton(true);
     const userRef = collection(db, "Parties", input, "Users");
     const user = auth.currentUser;
-
+  
     const docSnap = await getDocs(userRef);
     var isInPartyAlready = false;
 
@@ -115,11 +116,59 @@ export default function Login() {
     return signInWithPopup(auth, provider); 
   }
 
-  //handle google logout
-  const handleLogout = async () => {
-    await signOut(auth);
-  }
+    // Remove User from Party
+    async function removeUserFromParty(partyKeyword) {
+      const userRef = collection(db, "Parties", partyKeyword, "Users");
+      const user = auth.currentUser;
+  
+      const docSnap = await getDocs(userRef);
+      let userDocId = null;
+  
+      docSnap.forEach((e) => {
+        if (e.data().id === user.uid) {
+          userDocId = e.id;
+          return;
+        }
+      });
+  
+      if (userDocId) {
+        try {
+          await deleteDoc(doc(userRef, userDocId));
+          console.log("User removed from the party");
+        } catch (e) {
+          console.error("Error removing user from the party: ", e);
+        }
+      } else {
+        console.log("User not found in the party");
+      }
+  
+      // Remove partyKeyword from localStorage
+      localStorage.removeItem("partyKeyword");
+    }
+  
 
+  // handle google logout
+  const handleLogout = async () => {
+    const currentPartyKeyword = localStorage.getItem("partyKeyword");
+    if (currentPartyKeyword) {
+      await removeUserFromParty(currentPartyKeyword);
+    }
+    await signOut(auth);
+  };
+
+
+  const handleAnon = async () => {
+    try {
+      const { user } = await signInAnonymously(auth);
+      const randomId = Math.floor(1000 + Math.random() * 9000);
+      const displayName = `Guest${randomId}`;
+      await updateProfile(user, { displayName: displayName });
+      console.log("Logged in anonymously", displayName);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+  
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
@@ -132,21 +181,6 @@ export default function Login() {
     });
 
     return unsubscribe;
-  }, []);
-
-  // Fake it spotify button
-  useEffect(() =>{
-    function handleKeyDown(event){
-      if(event.key === "Escape"){
-        setShowButton(true);
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-
   }, []);
 
   return (
@@ -170,12 +204,13 @@ export default function Login() {
       {!showSession && (
       <div className="m-5">
         <GoogleButton onClick={handleGoogle}/>
+        <Button variant="secondary" className="mt-2" onClick = {handleAnon}> Anonymous Login</Button>
       </div>
       )}
       {showSession && (
         <div>
           <h5 className="mt-2 mb-2">
-            Welcome, {user.displayName || user.email}!
+            Welcome, {user.displayName || "guest"}!
           </h5>
           <div className="input-group mb-3">
           <input type="text" className="form-control" id="join" placeholder="Party Keyword" aria-label="Party Keyword" aria-describedby="basic-addon2"/>
