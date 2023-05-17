@@ -183,15 +183,10 @@ export default function Login() {
     return unsubscribe;
   }, []);
 
-  return (
+   return (
     <section className="h-100 gradient-form first">
       <div className="container py-5 h-100 login">
       <h1 className="display-1 d-flex user-select-none">Musicify</h1>
-      {showButton && (
-      <a className="btn btn-success btn-lg" href={AUTH_URL}>
-        Login using Spotify
-      </a>
-      )}
       <div className="music">
         <span className="stroke"></span>
         <span className="stroke"></span>
@@ -201,6 +196,11 @@ export default function Login() {
         <span className="stroke"></span>
         <span className="stroke"></span>
       </div>
+      {showButton && (
+      <a className="btn btn-success mt-3 mb-3" href={AUTH_URL}>
+        Login using Spotify
+      </a>
+      )}
       {!showSession && (
       <div className="m-5">
         <GoogleButton onClick={handleGoogle}/>
@@ -210,7 +210,7 @@ export default function Login() {
       {showSession && (
         <div>
           <h5 className="mt-2 mb-2">
-            Welcome, {user.displayName || "guest"}!
+            Welcome, {user.displayName || user.email}!
           </h5>
           <div className="input-group mb-3">
           <input type="text" className="form-control" id="join" placeholder="Party Keyword" aria-label="Party Keyword" aria-describedby="basic-addon2"/>
@@ -260,3 +260,4 @@ export default function Login() {
     </section>
   )
 }
+
