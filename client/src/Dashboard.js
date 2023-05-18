@@ -15,7 +15,7 @@ import History from "./History";
 import {auth, db} from "./firebase";
 import Level from "./Level";
 import Leaderboard from "./Leaderboard"
-import { addDoc, collection, serverTimestamp, updateDoc, limit, orderBy, query, onSnapshot, getDocs, where, doc, getDoc, deleteDoc } from "firebase/firestore"; 
+import { addDoc, collection, serverTimestamp, updateDoc, limit, orderBy, query, onSnapshot, getDocs, where, doc, getDoc } from "firebase/firestore"; 
 
 const spotifyApi = new SpotifyWebApi({
   clientId: "df5386eb382b4286a239d80f6b301967",
@@ -61,6 +61,15 @@ export default function Dashboard({ code }) {
         }
 
         const songDuration = trackDetails.body.duration_ms / 1000;
+        const usersRef = collection(db, "Parties", partyKeyword, "Users");
+        const userSnap = await getDocs(usersRef);
+        let userLevel;
+        userSnap.forEach((doc) => {
+          if (doc.data().id === userId.uid) {
+            userLevel = doc.data().level;
+          }
+        })
+
   
         const docRef = await addDoc(partySongsRef, {
           name: track.title,
@@ -71,8 +80,9 @@ export default function Dashboard({ code }) {
           timestamp: serverTimestamp(),
           genre: genres,
           score: 0,
-          priority: 0,
-          duration: songDuration
+          priority: userLevel,
+          duration: songDuration,
+          addedToPlaylist: false
         });
         
         console.log("Document written with ID: ", docRef.id);
@@ -140,12 +150,12 @@ export default function Dashboard({ code }) {
 
       //Get party details from firebase
       const partyData = docSnapshot.data()
-      const partyName = partyData.name;
-      const partyDate = partyData.date;
+      const partyName = partyData.PartyName;
+      const partyDate = partyData.Date;
 
       // Create the playlist
       const playlistName = `${partyName} - ${partyDate}`;
-      const playlistData = await spotifyApi.createPlaylist(playlistName, { 'public': true, 'collaborative': true })
+      const playlistData = await spotifyApi.createPlaylist(playlistName, { 'public': true })
       const playlistId = playlistData.body.id;
 
       // Update the Firebase document with the new playlist field
@@ -194,18 +204,6 @@ export default function Dashboard({ code }) {
     }
   }
 
-  async function deleteSong(songId) {
-    const partyKeyword = localStorage.getItem("partyKeyword");
-    const songRef = doc(db, "Parties", partyKeyword, "searchedSongs", songId);
-  
-    try {
-      await deleteDoc(songRef);
-      console.log(`Deleted song with id: ${songId}`);
-    } catch (error) {
-      console.error(`Error deleting song: ${error}`);
-    }
-  }
-
   useEffect(() => {
     if(accessToken){
       console.log("Creating playlist");
@@ -225,7 +223,7 @@ export default function Dashboard({ code }) {
       const partySongsRef = collection(db, "Parties", partyKeyword, "searchedSongs");
   
       const unsub = onSnapshot(
-        query(partySongsRef, orderBy("timestamp", "asc")),
+        query(partySongsRef, where("addedToPlaylist", "==", false), orderBy("timestamp", "asc")),
         (snapshot) => {
           const queuedSongsData = [];
           snapshot.forEach((doc) => {
@@ -248,7 +246,7 @@ export default function Dashboard({ code }) {
     // Then set it to execute every minute
     const intervalId = setInterval(() => {
       autoAdd();
-    }, 60 * 1000); // every minute in milliseconds
+    }, 5* 60 * 1000); // every minute in milliseconds
   
     // Clear interval on component unmount
     return () => clearInterval(intervalId);
@@ -378,7 +376,7 @@ export default function Dashboard({ code }) {
           <>{activeTab === "Home" && (
             <div className="d-flex justify-content-center align-items-center mb-2">
               {queuedSongs.length ? (
-                <Carousel indicators={false} variant="dark">
+                <Carousel indicators={false} variant="dark" interval={null}>
                  {queuedSongs.map((song, idx) => (
                   <Carousel.Item key={idx}>
                     <div className="d-flex justify-content-center align-items-center mb-2">
