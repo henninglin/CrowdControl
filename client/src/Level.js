@@ -62,7 +62,6 @@ const Level = () => {
   }
 }, [currentUser]);
 
-
   if (isLoading) {
     return <div>Loading...</div>;
   }

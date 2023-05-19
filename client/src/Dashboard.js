@@ -80,7 +80,7 @@ export default function Dashboard({ code }) {
           artist: track.artist,
           uri: track.uri,
           albumUrl: track.albumUrl,
-          user: userId.displayName,
+          user: userId.uid,
           timestamp: serverTimestamp(),
           genre: genres,
           score: 0,
