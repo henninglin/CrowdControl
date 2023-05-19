@@ -5,6 +5,7 @@ import TrackSearchResult from "./TrackSearchResult";
 import { Container, Form, Navbar, Nav, Carousel } from "react-bootstrap";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faHome, faChartLine, faTrophy, faUsers, faSignOutAlt, faMicrophone, faMusic} from '@fortawesome/free-solid-svg-icons'
+import { faSpotify } from '@fortawesome/free-brands-svg-icons'
 import SpotifyWebApi from "spotify-web-api-node";
 import axios from "axios";
 import LikeDislike from "./LikeDislike";
@@ -14,6 +15,7 @@ import History from "./History";
 import {auth, db} from "./firebase";
 import Level from "./Level";
 import Leaderboard from "./Leaderboard"
+import Spotify from "./Spotify"
 import { addDoc, collection, serverTimestamp, updateDoc, limit, orderBy, query, onSnapshot, getDocs, where, doc, getDoc } from "firebase/firestore"; 
 
 const spotifyApi = new SpotifyWebApi({
@@ -348,6 +350,7 @@ export default function Dashboard({ code }) {
           <Nav.Link active={activeTab === "Lyrics"} onClick={() => setActiveTab("Lyrics")}><FontAwesomeIcon icon={faMicrophone} size="lg"/></Nav.Link>
           <Nav.Link active={activeTab === "Leaderboard"} onClick={() => setActiveTab("Leaderboard")}><FontAwesomeIcon icon={faTrophy} size="lg"/></Nav.Link>
           <Nav.Link active={activeTab === "Data"} onClick={() => setActiveTab("Data")}><FontAwesomeIcon icon={faChartLine} size="lg"/></Nav.Link>
+          <Nav.Link active={activeTab === "Spotify"} onClick={() => setActiveTab("Spotify")}><FontAwesomeIcon icon={faSpotify} size="lg"/></Nav.Link>
           <Nav.Link active={activeTab === "Participants"} onClick={() => setActiveTab("Participants")}><FontAwesomeIcon icon={faUsers} size="lg"/></Nav.Link>
           <Nav.Link onClick={handleLogout}><FontAwesomeIcon icon={faSignOutAlt} size="lg"/></Nav.Link>
         </Nav>
@@ -423,6 +426,11 @@ export default function Dashboard({ code }) {
             {activeTab === "Playlist" && (
               <div className="d-flex justify-content-center align-items-center">
                 <History accessToken={accessToken}/>
+              </div>
+            )}
+            {activeTab === "Spotify" && (
+              <div className="d-flex justify-content-center align-items-center">
+                <Spotify/>
               </div>
             )}
           </>

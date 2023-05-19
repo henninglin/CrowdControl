@@ -6,7 +6,7 @@ const Player = () => {
   const [currentSong, setCurrentSong] = useState(null);
   const [latestSong, setLatestSong] = useState(null);
 
-  useEffect(() => {
+
     const fetchCurrentSong = async () => {
       const partyKeyword = localStorage.getItem('partyKeyword');
       const songsRef = collection(db, 'Parties', partyKeyword, 'searchedSongs');
@@ -50,7 +50,11 @@ const Player = () => {
 
     fetchCurrentSong();
     fetchLatestSong();
+
+  useEffect(() => {
+    fetchCurrentSong();
   }, []);
+  
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -69,7 +73,10 @@ const Player = () => {
           </div>
         </div>
       ) : (
-        <p>No latest song available</p>
+        <div>
+          <p>An Error has occured</p>
+          <button onClick={fetchCurrentSong}>Retry Fetch</button>
+        </div>
       )}
       {currentSong ? (
         <div style={{ display: 'flex', alignItems: 'center', marginLeft: '10px' }}>
@@ -86,7 +93,7 @@ const Player = () => {
           </div>
         </div>
       ) : (
-        <p>No song currently playing</p>
+        <p>No Next In Queue</p>
       )}
     </div>
   );
