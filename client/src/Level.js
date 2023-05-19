@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db } from './firebase';
 import ProgressBar from './Progress';
-import { collection, onSnapshot, updateDoc } from 'firebase/firestore';
+import { collection, onSnapshot, updateDoc, doc } from 'firebase/firestore';
 
 const Level = () => {
   const [score, setScore] = useState(0);
@@ -10,11 +10,10 @@ const Level = () => {
   const [currentUser, setCurrentUser] = useState(null);
 
   const participantCount = Math.max(localStorage.getItem("numParticipants") || 10, 10);
-
+  const partyKeyword = localStorage.getItem("partyKeyword");
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(user => {
-      console.log("User in onAuth", user);
       if (user) {
         setCurrentUser(user);
         setIsLoading(false);
@@ -26,41 +25,23 @@ const Level = () => {
     return unsubscribe;
   }, []);
 
- useEffect(() => {
-  const partyKeyword = localStorage.getItem("partyKeyword");
-
-  if (currentUser && partyKeyword) {
-    console.log("level");
-    const usersRef = collection(db, "Parties", partyKeyword, "Users");
-    
-    const unsubscribe = onSnapshot(usersRef, (querySnapshot) => {
-      querySnapshot.forEach((doc) => {
-        if (doc.id === currentUser.uid) {
+  useEffect(() => {
+    if (currentUser && partyKeyword) {
+      const userRef = doc(db, "Parties", partyKeyword, "Users", currentUser.uid);
+      const unsubscribe = onSnapshot(userRef, (doc) => {
+        if (doc.exists()) {
           const data = doc.data();
           setScore(data.score);
           setLevel(data.level);
-          console.log("Score:", data.score); 
-          if (data.score >= participantCount) {
-            setLevel(data.level + 1);
-            setScore(0);
-            console.log("doc.ref:", doc.ref);
-            if(doc.ref){
-                updateDoc(doc.ref, { score: 0, level: data.level + 1}).then(()=>{
-                    console.log("Level Increased");
-                }).catch((error) =>{
-                    console.log("Error updating score:", error);
-                })
-            }
-          }
+          console.log("Score:", data.score);
         }
       });
-    });
 
-    return () => {
-      unsubscribe();
-    };
-  }
-}, [currentUser]);
+      return () => {
+        unsubscribe();
+      };
+    }
+  }, [currentUser, partyKeyword]);
 
   if (isLoading) {
     return <div>Loading...</div>;
