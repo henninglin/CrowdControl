@@ -6,7 +6,7 @@ import Form from 'react-bootstrap/Form';
 import Modal from 'react-bootstrap/Modal';
 import "./App.css"
 import { GoogleAuthProvider, signInWithPopup, signOut, signInAnonymously, updateProfile } from 'firebase/auth';
-import { addDoc, setDoc, collection, getDoc, getDocs, doc, deleteDoc } from 'firebase/firestore';
+import { setDoc, collection, getDoc, getDocs, doc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from './firebase';
 
 const AUTH_URL = "https://accounts.spotify.com/authorize?client_id=df5386eb382b4286a239d80f6b301967&response_type=code&redirect_uri=http://localhost:3000&scope=streaming%20user-read-email%20user-read-private%20user-library-read%20user-library-modify%20user-read-playback-state%20user-modify-playback-state%20playlist-modify-public%20playlist-modify-private";
@@ -45,7 +45,8 @@ export default function Login() {
     }
 
     try {
-      const docRef = await addDoc(userRef,{
+      const docRef = doc(userRef, user.uid)
+      await setDoc(docRef,{
         id: user.uid,
         level: 1,
         score: 0,

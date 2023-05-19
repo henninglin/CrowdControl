@@ -9,7 +9,7 @@ const Level = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
 
-  const participantCount = localStorage.getItem("numParticipants") || 10;
+  const participantCount = Math.max(localStorage.getItem("numParticipants") || 10, 10);
 
 
   useEffect(() => {
@@ -30,6 +30,7 @@ const Level = () => {
   const partyKeyword = localStorage.getItem("partyKeyword");
 
   if (currentUser && partyKeyword) {
+    console.log("level");
     const usersRef = collection(db, "Parties", partyKeyword, "Users");
     
     const unsubscribe = onSnapshot(usersRef, (querySnapshot) => {
@@ -73,7 +74,7 @@ const Level = () => {
     <div className="my-2 flex-column d-flex align-items-center">
       <h5 className="my-2">{currentUser.displayName}</h5>
       <p> DJ Level: {level}</p>
-      <ProgressBar bgcolor={'#6a1b9a'} completed={score} />
+      <ProgressBar bgcolor={'#6a1b9a'} participantCount={participantCount} score={score} />
     </div>
   );
 };

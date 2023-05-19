@@ -1,7 +1,9 @@
 import React from "react";
 
 const ProgressBar = (props) => {
-  const { bgcolor, completed } = props;
+  const { bgcolor, participantCount, score } = props;
+
+  const completed = (score / participantCount) * 100;
 
   const containerStyles = {
     height: 10,
@@ -33,9 +35,9 @@ const ProgressBar = (props) => {
   }
 
   return (
-    <div style ={containerStyles}>
-      <div style ={fillerStyles}>
-        <span style={labelStyles}>{`${completed}%`}</span>
+    <div style={containerStyles}>
+      <div style={fillerStyles}>
+        <span style={labelStyles}>{`${completed.toFixed(0)}%`}</span>
       </div>
     </div>
   );

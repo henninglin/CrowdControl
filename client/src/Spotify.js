@@ -25,7 +25,7 @@ const Spotify = () => {
           src={`https://open.spotify.com/embed/playlist/${currentPlaylistId}`}
           width="500"
           height="380"
-          frameborder="0"
+          frameBorder="0"
           allowtransparency="true"
           allow="encrypted-media"
         ></iframe>
