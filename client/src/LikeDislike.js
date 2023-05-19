@@ -5,7 +5,7 @@ import { faThumbsDown } from '@fortawesome/free-solid-svg-icons';
 import { auth, db } from './firebase';
 import { getDoc, doc, updateDoc, increment } from "firebase/firestore";
 
-const LikeDislike = ({ songId }) => {
+const LikeDislike = ({ songId, hideSong }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
   const [liked, setLiked] = useState(false);
@@ -29,23 +29,6 @@ const LikeDislike = ({ songId }) => {
 
   useEffect(() => {
     setSongChanged(true);
-  }, [songId]);
-
-  useEffect(() => {
-    // Load the liked and disliked states from the local storage
-    const likedSongs = JSON.parse(localStorage.getItem('likedSongs')) || {};
-    const dislikedSongs = JSON.parse(localStorage.getItem('dislikedSongs')) || {};
-  
-    if (likedSongs[songId]) {
-      setLiked(true);
-      setDisliked(false);
-    } else if (dislikedSongs[songId]) {
-      setDisliked(true);
-      setLiked(false);
-    } else{
-      setLiked(false);
-      setDisliked(false);
-    }
   }, [songId]);
 
   useEffect(() => {
@@ -94,26 +77,20 @@ const LikeDislike = ({ songId }) => {
     console.log("handleLike called");
     if (!songId || liked || disliked) return;
     
-    const likedSongs = JSON.parse(localStorage.getItem('likedSongs')) || {};
-    likedSongs[songId] = true;
-    localStorage.setItem('likedSongs', JSON.stringify(likedSongs));
-
     await updateLikesDislikes(true);
     setLiked(true);
     setDisliked(false);
+    hideSong();
   };
   
   const handleDislike = async () => {
     console.log("handleDislike called");
     if (!songId || disliked || liked) return;
-
-    const dislikedSongs = JSON.parse(localStorage.getItem('dislikedSongs')) || {};
-    dislikedSongs[songId] = true;
-    localStorage.setItem('dislikedSongs', JSON.stringify(dislikedSongs));
-   
+  
     await updateLikesDislikes(false);
     setLiked(false);
     setDisliked(true);
+    hideSong();
   };
 
   const updateLikesDislikes = async (isLike) => {

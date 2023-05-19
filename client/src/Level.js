@@ -9,6 +9,8 @@ const Level = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
 
+  const participantCount = localStorage.getItem("numParticipants") || 10;
+
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(user => {
@@ -37,7 +39,7 @@ const Level = () => {
           setScore(data.score);
           setLevel(data.level);
           console.log("Score:", data.score); 
-          if (data.score >= 10) {
+          if (data.score >= participantCount) {
             setLevel(data.level + 1);
             setScore(0);
             if(doc.ref){

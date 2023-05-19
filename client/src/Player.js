@@ -1,61 +1,95 @@
-import React, { useState, useEffect } from 'react';
-import SpotifyPlayer from 'react-spotify-web-playback';
-import axios from 'axios';
-import { io } from 'socket.io-client';
+import React, { useEffect, useState } from 'react';
+import { collection, query, onSnapshot, orderBy, limit, where } from 'firebase/firestore';
+import { db } from './firebase';
 
-const socket = io('http://localhost:3001');
-
-export default function Player({ accessToken, trackUri }) {
-  const [play, setPlay] = useState(false);
+const Player = () => {
+  const [currentSong, setCurrentSong] = useState(null);
+  const [latestSong, setLatestSong] = useState(null);
 
   useEffect(() => {
-    const postTrackUri = async () => {
-      try {
-        await axios.post('http://localhost:3001/queue', { trackUri });
-      } catch (error) {
-        console.log(error);
-      }
+    const fetchCurrentSong = async () => {
+      const partyKeyword = localStorage.getItem('partyKeyword');
+      const songsRef = collection(db, 'Parties', partyKeyword, 'searchedSongs');
+      const currentSongQuery = query(
+        songsRef,
+        where('addedToPlaylist', '==', false),
+        orderBy('priority', 'desc'),
+        orderBy('timestamp', 'asc'),
+        limit(1)
+      );
+
+      onSnapshot(currentSongQuery, (currentSnapshot) => {
+        if (!currentSnapshot.empty) {
+          const currentSongData = currentSnapshot.docs[0].data();
+          setCurrentSong(currentSongData);
+        } else {
+          setCurrentSong(null);
+        }
+      });
     };
 
-    if (trackUri) {
-      postTrackUri();
-    }
-  }, [trackUri]);
+    const fetchLatestSong = async () => {
+      const partyKeyword = localStorage.getItem('partyKeyword');
+      const songsRef = collection(db, 'Parties', partyKeyword, 'searchedSongs');
+      const latestSongQuery = query(
+        songsRef,
+        where('addedToPlaylist', '==', true),
+        orderBy('timestamp', 'desc'),
+        limit(1)
+      );
 
-  useEffect(() => {
-    socket.on('playSong', (uri) => {
-      setPlay(true);
-    });
-
-    return () => {
-      socket.off('playSong');
+      onSnapshot(latestSongQuery, (latestSnapshot) => {
+        if (!latestSnapshot.empty) {
+          const latestSongData = latestSnapshot.docs[0].data();
+          setLatestSong(latestSongData);
+        } else {
+          setLatestSong(null);
+        }
+      });
     };
+
+    fetchCurrentSong();
+    fetchLatestSong();
   }, []);
 
   return (
-    <div className="my-2">
-      {trackUri && (
-        <SpotifyPlayer
-          key={trackUri}
-          token={accessToken}
-          showSaveIcon
-          callback={(state) => {
-            if (!state.isPlaying) setPlay(false);
-          }}
-          play={play}
-          uris={[trackUri]}
-          styles={{
-            activeColor: '#fff',
-            bgColor: '#333',
-            color: '#fff',
-            loaderColor: '#fff',
-            sliderColor: '#1cb954',
-            trackArtistColor: '#ccc',
-            trackNameColor: '#fff',
-          }}
-        />
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {latestSong ? (
+        <div style={{ display: 'flex', alignItems: 'center', marginRight: '10px' }}>
+          <div>
+            <img
+              src={latestSong.albumUrl}
+              alt="Album"
+              style={{ width: '50px', height: '50px', borderRadius: '10%' }}
+            />
+          </div>
+          <div style={{ marginLeft: '10px' }}>
+            <h4 style={{ fontSize: '1em', margin: 0 }}>Now Playing:</h4>
+            <h4 style={{ fontSize: '0.8em', margin: 0 }}>{latestSong.name} by {latestSong.artist}</h4>
+          </div>
+        </div>
+      ) : (
+        <p>No latest song available</p>
       )}
-      {!trackUri && <div>No song selected</div>}
+      {currentSong ? (
+        <div style={{ display: 'flex', alignItems: 'center', marginLeft: '10px' }}>
+          <div>
+            <img
+              src={currentSong.albumUrl}
+              alt="Album"
+              style={{ width: '50px', height: '50px', borderRadius: '10%' }}
+            />
+          </div>
+          <div style={{ marginLeft: '10px' }}>
+            <h4 style={{ fontSize: '1em', margin: 0 }}>Next In Queue:</h4>
+            <h4 style={{ fontSize: '0.8em', margin: 0 }}>{currentSong.name} by {currentSong.artist}</h4>
+          </div>
+        </div>
+      ) : (
+        <p>No song currently playing</p>
+      )}
     </div>
   );
-}
+};
+
+export default Player;

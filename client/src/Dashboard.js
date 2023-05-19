@@ -4,8 +4,7 @@ import Player from "./Player";
 import TrackSearchResult from "./TrackSearchResult";
 import { Container, Form, Navbar, Nav, Carousel } from "react-bootstrap";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faHome, faChartLine, faTrophy, faUsers, faSignOutAlt, faMicrophone} from '@fortawesome/free-solid-svg-icons'
-import { faSpotify } from '@fortawesome/free-brands-svg-icons';
+import { faHome, faChartLine, faTrophy, faUsers, faSignOutAlt, faMicrophone, faMusic} from '@fortawesome/free-solid-svg-icons'
 import SpotifyWebApi from "spotify-web-api-node";
 import axios from "axios";
 import LikeDislike from "./LikeDislike";
@@ -30,6 +29,9 @@ export default function Dashboard({ code }) {
   const [activeTab, setActiveTab] = useState("Home");
   const [queuedSongs, setQueuedSongs] = useState([]);
   const [selectedSongId, setSelectedSongId] = useState(null);
+  const [currentTrack, setCurrentTrack] = useState(null);
+  const [hiddenSongs, setHiddenSongs] = useState([]);
+  const [isEscapePressed, setIsEscapePressed] = useState(false);
 
   function chooseTrack(track) {
 
@@ -87,6 +89,7 @@ export default function Dashboard({ code }) {
         
         console.log("Document written with ID: ", docRef.id);
         console.log("Added song to database: ", track.title);
+          alert(`"${track.title}" has been queued!`);
 
         return docRef.id;
       } catch (e) {
@@ -97,32 +100,6 @@ export default function Dashboard({ code }) {
     addTrackToFirestore().then(async(songId)=>{
       setSelectedSongId(songId);
       console.log(songId);
-
-      // Fetch the playlistId from Firebase and call addTrackToPlaylist()
-      const partyKeyword = localStorage.getItem("partyKeyword");
-      const playlistId = await fetchPlaylistId(partyKeyword);
-
-      if(playlistId){
-        const partySongsRef = collection(db, "Parties", partyKeyword, "searchedSongs");
-        const songQuery = query(partySongsRef, where("addedToPlaylist", "==", false), orderBy("timestamp", "asc"), limit(1));
-        const songSnap = await getDocs(songQuery);
-
-        if (!songSnap.empty) {
-          const oldestSong = songSnap.docs[0];
-          // Add the song with the oldest timestamp to the Spotify playlist
-          addTrackToPlaylist(playlistId, oldestSong.data().uri);
-    
-          // Update the song in Firestore to mark it as added to the playlist
-          await updateDoc(doc(partySongsRef, oldestSong.id), {
-            addedToPlaylist: true
-          });
-        } else {
-          console.error("Could not fetch song with the oldest timestamp");
-        }
-
-      } else {
-        console.error("Could not fetch playlistId");
-      }
     });
   }
 
@@ -204,6 +181,76 @@ export default function Dashboard({ code }) {
     }
   }
 
+  //Add song that is highest priority to playlist
+  const handleAddSongToPlaylist = async () => {
+    try {
+      const partyKeyword = localStorage.getItem('partyKeyword');
+      const playlistId = await fetchPlaylistId(partyKeyword);
+  
+      if (playlistId) {
+        const partySongsRef = collection(db, 'Parties', partyKeyword, 'searchedSongs');
+        const songQuery = query(
+          partySongsRef,
+          where('addedToPlaylist', '==', false),
+          orderBy('priority', 'desc'),
+          orderBy('timestamp', 'asc'),
+          limit(1)
+        );
+        const songSnap = await getDocs(songQuery);
+  
+        if (!songSnap.empty) {
+          const getSong = songSnap.docs[0];
+          const trackUri = getSong.data().uri;
+          const songData = getSong.data();
+          setCurrentTrack(songData);
+
+          // Fetch the lyrics for the current song
+          const lyricsResponse = await axios.get("https://musicify-lin.herokuapp.com/lyrics", {
+          params: {
+              track: songData.name,
+              artist: songData.artist,
+            },
+          });
+
+          // Set the lyrics in the state
+          setLyrics(lyricsResponse.data.lyrics);
+  
+          // Add the song to the playlist
+          await addTrackToPlaylist(playlistId, trackUri);
+  
+          // Update the Firestore document to mark the song as added to the playlist
+          await updateDoc(doc(partySongsRef, getSong.id), {
+            addedToPlaylist: true,
+          });
+  
+          console.log('Song added to the playlist successfully');
+        } else {
+          console.error('Could not find a song to add to the playlist');
+        }
+      } else {
+        console.error('Could not fetch playlistId');
+      }
+    } catch (error) {
+      console.error('Error adding song to the playlist:', error);
+    }
+  };  
+
+  //Fake button that adds the song to spotify
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setIsEscapePressed((prevIsEscapePressed) => !prevIsEscapePressed);
+      }
+    };
+  
+    window.addEventListener('keydown', handleKeyDown);
+  
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  //Creates a spotify playlist when loaded
   useEffect(() => {
     if(accessToken){
       console.log("Creating playlist");
@@ -215,7 +262,7 @@ export default function Dashboard({ code }) {
     console.log("Access token:", accessToken);
   }, [accessToken]);
 
-  //Show queued songs as a carousel.
+  //Show queued songs as a carousel/stack.
   useEffect(() => {
     const partyKeyword = localStorage.getItem("partyKeyword");
   
@@ -223,7 +270,7 @@ export default function Dashboard({ code }) {
       const partySongsRef = collection(db, "Parties", partyKeyword, "searchedSongs");
   
       const unsub = onSnapshot(
-        query(partySongsRef, where("addedToPlaylist", "==", false), orderBy("timestamp", "asc")),
+        query(partySongsRef, orderBy("timestamp", "asc")),
         (snapshot) => {
           const queuedSongsData = [];
           snapshot.forEach((doc) => {
@@ -239,61 +286,11 @@ export default function Dashboard({ code }) {
     }
   }, []);
 
-  useEffect(() => {
-    // Execute the function immediately upon mounting
-    autoAdd();
-  
-    // Then set it to execute every minute
-    const intervalId = setInterval(() => {
-      autoAdd();
-    }, 5* 60 * 1000); // every minute in milliseconds
-  
-    // Clear interval on component unmount
-    return () => clearInterval(intervalId);
-  }, []);
-
-  async function autoAdd() {
-    // Fetch the playlistId from Firebase and call addTrackToPlaylist()
-    const partyKeyword = localStorage.getItem("partyKeyword");
-    const playlistId = await fetchPlaylistId(partyKeyword);
-  
-    if(playlistId){
-      const partySongsRef = collection(db, "Parties", partyKeyword, "searchedSongs");
-      const songQuery = query(partySongsRef, where("addedToPlaylist", "==", false), orderBy("timestamp", "asc"), limit(1));
-      const songSnap = await getDocs(songQuery);
-  
-      if (!songSnap.empty) {
-        const oldestSong = songSnap.docs[0];
-        // Add the song with the oldest timestamp to the Spotify playlist
-        addTrackToPlaylist(playlistId, oldestSong.data().uri);
-    
-        // Update the song in Firestore to mark it as added to the playlist
-        await updateDoc(doc(partySongsRef, oldestSong.id), {
-          addedToPlaylist: true
-        });
-      } else {
-        console.error("Could not fetch song with the oldest timestamp");
-      }
-  
-    } else {
-      console.error("Could not fetch playlistId");
-    }
-  }
-  
-  //Used to show lyrics from the song playing
-  useEffect(() => {
-    if (!playingTrack) return setLyrics("Search a song to display lyrics");
-    axios
-      .get("https://musicify-lin.herokuapp.com/lyrics", {
-        params: {
-          track: playingTrack.title,
-          artist: playingTrack.artist,
-        },
-      })
-      .then((res) => {
-        setLyrics(res.data.lyrics);
-      });
-  }, [playingTrack]);
+  // Function to hide a song
+  const hideSong = (songId) => {
+    console.log('hidden:', songId);
+    setHiddenSongs(prevHiddenSongs => [...prevHiddenSongs, songId]);
+  };
 
   useEffect(() => {
     if (!accessToken) return console.log("No access token");
@@ -347,10 +344,10 @@ export default function Dashboard({ code }) {
         <Navbar.Brand>Musicify</Navbar.Brand>
         <Nav>
           <Nav.Link active={activeTab === "Home"} onClick={() => setActiveTab("Home")}><FontAwesomeIcon icon={faHome} size="lg"/></Nav.Link>
+          <Nav.Link active={activeTab === "Playlist"} onClick={() => setActiveTab("Playlist")}><FontAwesomeIcon icon={faMusic} size="lg"/></Nav.Link>
           <Nav.Link active={activeTab === "Lyrics"} onClick={() => setActiveTab("Lyrics")}><FontAwesomeIcon icon={faMicrophone} size="lg"/></Nav.Link>
-          <Nav.Link active={activeTab === "Data"} onClick={() => setActiveTab("Data")}><FontAwesomeIcon icon={faChartLine} size="lg"/></Nav.Link>
           <Nav.Link active={activeTab === "Leaderboard"} onClick={() => setActiveTab("Leaderboard")}><FontAwesomeIcon icon={faTrophy} size="lg"/></Nav.Link>
-          <Nav.Link active={activeTab === "Playlist"} onClick={() => setActiveTab("Playlist")}><FontAwesomeIcon icon={faSpotify} size="lg"/></Nav.Link>
+          <Nav.Link active={activeTab === "Data"} onClick={() => setActiveTab("Data")}><FontAwesomeIcon icon={faChartLine} size="lg"/></Nav.Link>
           <Nav.Link active={activeTab === "Participants"} onClick={() => setActiveTab("Participants")}><FontAwesomeIcon icon={faUsers} size="lg"/></Nav.Link>
           <Nav.Link onClick={handleLogout}><FontAwesomeIcon icon={faSignOutAlt} size="lg"/></Nav.Link>
         </Nav>
@@ -376,8 +373,8 @@ export default function Dashboard({ code }) {
           <>{activeTab === "Home" && (
             <div className="d-flex justify-content-center align-items-center mb-2">
               {queuedSongs.length ? (
-                <Carousel indicators={false} variant="dark" interval={null}>
-                 {queuedSongs.map((song, idx) => (
+                <Carousel indicators={false} variant="dark" interval={null} controls={false}>
+                  {queuedSongs.filter(song => !hiddenSongs.includes(song.id)).map((song, idx) => (
                   <Carousel.Item key={idx}>
                     <div className="d-flex justify-content-center align-items-center mb-2">
                       <div className="justify-content-center">
@@ -390,21 +387,21 @@ export default function Dashboard({ code }) {
                             style={{ width: "100%", height: "100%", objectFit: 'cover' }}
                           />
                         </div>
-                        <LikeDislike songId={song.id}/>
+                        <LikeDislike songId={song.id} hideSong={()=> hideSong(song.id)}/>
                       </div>
                     </div>
                   </Carousel.Item>
                 ))}
                 </Carousel>
               ) : (
-                <p>No songs queued yet</p>
+                <p>{queuedSongs.length === 0 ? "No songs queued yet" : "All songs have been rated"}</p>
               )}
             </div>
             )}
-            {activeTab === "Lyrics" && playingTrack && (
+            {activeTab === "Lyrics" && currentTrack && (
             <div className="text-center" style={{ whiteSpace: "pre" }}>
-              <h4 style= {{ textAlign: 'center' }}>{playingTrack.title}</h4>
-              <p className="text-muted" style= {{ textAlign: 'center' }}>{playingTrack.artist}</p>
+              <h4 style= {{ textAlign: 'center' }}>{currentTrack.name}</h4>
+              <p className="text-muted" style= {{ textAlign: 'center' }}>{currentTrack.artist}</p>
               {lyrics}
             </div>
             )}
@@ -433,9 +430,12 @@ export default function Dashboard({ code }) {
       </div>
       <div className="justify-content-center align-items-center mb-2">
         <Level/>
+        {isEscapePressed && (
+           <button onClick={handleAddSongToPlaylist}>Add Highest Priority Song</button>
+        )}
       </div>
       <div>
-        {/*<Player accessToken={accessToken}/>*/}
+        <Player/>
       </div>
       
     </Container>

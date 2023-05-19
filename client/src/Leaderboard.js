@@ -40,8 +40,8 @@ const Leaderboard = () => {
   }, [partyKeyword]);
 
   return (
-    <div className="leaderboard-container">
-      <h1>Leaderboard</h1>
+    <div className="leaderboard-container mt-3">
+      <h3>Leaderboard</h3>
       <Table>
         <thead>
           <tr>

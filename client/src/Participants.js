@@ -37,6 +37,8 @@ const ParticipantsList = () => {
       });
       setParticipants(fetchedParticipants);
       setLoading(false);
+
+      localStorage.setItem("numParticipants", fetchedParticipants.length.toString());
     });
     return () => unsubscribe();
   }, [partyKeyword]);

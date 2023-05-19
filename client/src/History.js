@@ -1,44 +1,54 @@
-import { useState, useEffect } from "react";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "./firebase";
+import React, { useEffect, useState } from 'react';
+import { collection, query, onSnapshot, orderBy, where } from 'firebase/firestore';
+import { db } from './firebase';
+import Table from 'react-bootstrap/Table';
 
-const History = ({ accessToken }) => {
-  const [currentPlaylistId, setCurrentPlaylistId] = useState(null);
+const History = () => {
+  const [songs, setSongs] = useState([]);
+  const partyKeyword = localStorage.getItem("partyKeyword");
 
   useEffect(() => {
-    const fetchPlaylistId = async () => {
-      const partyKeyword = localStorage.getItem('partyKeyword');
-      const docRef = doc(db, "Parties", partyKeyword);
-      const docSnap = await getDoc(docRef);
+    if (partyKeyword) {
+      const songsRef = collection(db, "Parties", partyKeyword, "searchedSongs");
+      const q = query(songsRef, where("addedToPlaylist", "==", false), orderBy("priority", "desc"), orderBy("timestamp", "asc"));
 
-      if (docSnap.exists()) {
-        setCurrentPlaylistId(docSnap.data().playlist);
-      } else {
-        console.log("No such document!");
-      }
-    };
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        let songsData = [];
+        querySnapshot.forEach((doc) => {
+          songsData.push(doc.data());
+        });
+        setSongs(songsData);
+      });
 
-    fetchPlaylistId();
-  }, []);
+      return () => {
+        unsubscribe();
+      };
+    }
+  }, [partyKeyword]);
 
   return (
-    <div>
-      {currentPlaylistId && (
-        <iframe
-          title="Spotify Playlist"
-          className="mt-3"
-          src={`https://open.spotify.com/embed/playlist/${currentPlaylistId}`}
-          width="500"
-          height="380"
-          frameBorder="0"
-          allowtransparency="true"
-          allow="encrypted-media"
-        ></iframe>
-      )}
+    <div className="leaderboard-container mt-3">
+      <h3>Current Queue</h3>
+      <Table striped bordered hover>
+        <thead>
+          <tr>
+            <th>Track</th>
+            <th>Artist</th>
+            <th>Priority</th>
+          </tr>
+        </thead>
+        <tbody>
+          {songs.map((song, index) => (
+            <tr key={index}>
+              <td>{song.name}</td>
+              <td>{song.artist}</td>
+              <td>{song.priority}</td>
+            </tr>
+          ))}
+        </tbody>
+      </Table>
     </div>
   );
 };
 
 export default History;
-
-
