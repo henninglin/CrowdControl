@@ -376,7 +376,7 @@ export default function Dashboard({ code }) {
           <>{activeTab === "Home" && (
             <div className="d-flex justify-content-center align-items-center mb-2">
               {queuedSongs.length ? (
-                <Carousel indicators={false} variant="dark" interval={null} controls={false}>
+                <Carousel indicators={false} variant="dark" interval={null}>
                   {queuedSongs.filter(song => !hiddenSongs.includes(song.id)).map((song, idx) => (
                   <Carousel.Item key={idx}>
                     <div className="d-flex justify-content-center align-items-center mb-2">
@@ -390,7 +390,9 @@ export default function Dashboard({ code }) {
                             style={{ width: "100%", height: "100%", objectFit: 'cover' }}
                           />
                         </div>
-                        <LikeDislike songId={song.id} hideSong={()=> hideSong(song.id)}/>
+                        <LikeDislike songId={song.id} 
+                        //hideSong={()=> hideSong(song.id)}
+                        />
                       </div>
                     </div>
                   </Carousel.Item>

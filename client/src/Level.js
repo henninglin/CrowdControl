@@ -43,6 +43,7 @@ const Level = () => {
           if (data.score >= participantCount) {
             setLevel(data.level + 1);
             setScore(0);
+            console.log("doc.ref:", doc.ref);
             if(doc.ref){
                 updateDoc(doc.ref, { score: 0, level: data.level + 1}).then(()=>{
                     console.log("Level Increased");
