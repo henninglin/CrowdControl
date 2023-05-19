@@ -207,7 +207,7 @@ export default function Dashboard({ code }) {
           setCurrentTrack(songData);
 
           // Fetch the lyrics for the current song
-          const lyricsResponse = await axios.get("https://musicify-lin.herokuapp.com/lyrics", {
+          const lyricsResponse = await axios.get("https://crowdcontrol.herokuapp.com/lyrics", {
           params: {
               track: songData.name,
               artist: songData.artist,
@@ -343,7 +343,7 @@ export default function Dashboard({ code }) {
       style={{ height: "100vh", maxWidth: "600px", margin: "auto", }}
     >
       <Navbar className="justify-content-between">
-        <Navbar.Brand>Musicify</Navbar.Brand>
+        <Navbar.Brand>Crowd Control</Navbar.Brand>
         <Nav>
           <Nav.Link active={activeTab === "Home"} onClick={() => setActiveTab("Home")}><FontAwesomeIcon icon={faHome} size="lg"/></Nav.Link>
           <Nav.Link active={activeTab === "Playlist"} onClick={() => setActiveTab("Playlist")}><FontAwesomeIcon icon={faMusic} size="lg"/></Nav.Link>

@@ -9,7 +9,7 @@ import { GoogleAuthProvider, signInWithPopup, signOut, signInAnonymously, update
 import { setDoc, collection, getDoc, getDocs, doc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from './firebase';
 
-const AUTH_URL = "https://accounts.spotify.com/authorize?client_id=df5386eb382b4286a239d80f6b301967&response_type=code&redirect_uri=http://localhost:3000&scope=streaming%20user-read-email%20user-read-private%20user-library-read%20user-library-modify%20user-read-playback-state%20user-modify-playback-state%20playlist-modify-public%20playlist-modify-private";
+const AUTH_URL = "https://accounts.spotify.com/authorize?client_id=df5386eb382b4286a239d80f6b301967&response_type=code&redirect_uri=https://crowdcontrol.herokuapp.com/&scope=streaming%20user-read-email%20user-read-private%20user-library-read%20user-library-modify%20user-read-playback-state%20user-modify-playback-state%20playlist-modify-public%20playlist-modify-private";
 
 export default function Login() {
 
@@ -187,7 +187,7 @@ export default function Login() {
    return (
     <section className="h-100 gradient-form first">
       <div className="container py-5 h-100 login">
-      <h1 className="display-1 d-flex user-select-none">Musicify</h1>
+      <h1 className="display-3 d-flex user-select-none">Crowd Control</h1>
       <div className="music">
         <span className="stroke"></span>
         <span className="stroke"></span>

@@ -8,7 +8,7 @@ export default function useAuth(code) {
 
   useEffect(() => {
     axios
-      .post("http://localhost:3001/login", {
+      .post("https://crowdcontrol.herokuapp.com/login", {
         code,
       })
       .then(res => {
@@ -28,7 +28,7 @@ export default function useAuth(code) {
     if (!refreshToken || !expiresIn) return
     const interval = setInterval(() => {
       axios
-        .post("http://localhost:3001/refresh", {
+        .post("https://crowdcontrol.herokuapp.com/refresh", {
           refreshToken,
         })
         .then(res => {
