@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db } from './firebase';
 import ProgressBar from './Progress';
-import { collection, onSnapshot, updateDoc, doc } from 'firebase/firestore';
+import { onSnapshot, doc } from 'firebase/firestore';
 
 const Level = () => {
   const [score, setScore] = useState(0);

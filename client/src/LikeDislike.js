@@ -3,16 +3,41 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faThumbsUp } from '@fortawesome/free-solid-svg-icons';
 import { faThumbsDown } from '@fortawesome/free-solid-svg-icons';
 import { auth, db } from './firebase';
-import { getDoc, doc, updateDoc, increment, collection } from "firebase/firestore";
+import { getDoc, doc, updateDoc, increment } from "firebase/firestore";
 
 const LikeDislike = ({ songId, hideSong }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
   const [liked, setLiked] = useState(false);
   const [disliked, setDisliked] = useState(false);
-  const [songChanged, setSongChanged] = useState(false);
-
+  
   const partyKeyword = localStorage.getItem("partyKeyword");
+
+  const updateGlobalLike = async (incrementBy) => {
+    try {
+      const partyRef = doc(db, 'Parties', partyKeyword);
+      await updateDoc(partyRef, {
+        Like: increment(incrementBy)
+      });
+      console.log(`Global Like updated by ${incrementBy}`);
+    } catch (error) {
+      console.error('Error updating Global Like:', error);
+    }
+  };
+
+  const updateGlobalDislike = async (incrementBy) => {
+    try {
+      const partyRef = doc(db, 'Parties', partyKeyword);
+      await updateDoc(partyRef, {
+        Like: increment(incrementBy)
+      });
+      console.log(`Global Like updated by ${incrementBy}`);
+    } catch (error) {
+      console.error('Error updating Global Like:', error);
+    }
+  };
+
+
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(user => {
@@ -51,49 +76,6 @@ const LikeDislike = ({ songId, hideSong }) => {
       console.error("Error updating user's score:", error);
     }
   };
-  
-
-  /*useEffect(() => {
-    if (songChanged) {
-      // Reset the like and dislike state when the songId changes
-      setLiked(false);
-      setDisliked(false);
-  
-      // Update user's score with the just played song's score
-      const updateUserScoreWithSongScore = () => {
-        if (!songId || !currentUser) return;
-  
-        (async () => {
-          try {
-            // Get the just played song's score from the searchedSongs collection
-            const songRef = doc(db, "Parties", partyKeyword, "searchedSongs", songId);
-            const songDoc = await getDoc(songRef);
-  
-            if (songDoc.exists()) {
-              const songScore = songDoc.data().score;
-  
-              // Get the user's score from the Users collection
-              const userRef = doc(db, "Parties", partyKeyword, "Users", currentUser.uid);
-              const userDoc = await getDoc(userRef);
-  
-              if (userDoc.exists()) {
-                const userScore = userDoc.data().score;
-  
-                // Update the user's score in the Users collection
-                await updateDoc(userRef, { score: userScore + songScore });
-                console.log("User's score updated with the just played song's score.");
-              }
-            }
-          } catch (error) {
-            console.error("Error updating user's score:", error);
-          }
-        })();
-      };
-  
-      updateUserScoreWithSongScore();
-      setSongChanged(false);
-    }
-  }, [songChanged, songId, currentUser, partyKeyword]);*/
 
   const handleLike = async () => {
     console.log("handleLike called");
@@ -103,7 +85,26 @@ const LikeDislike = ({ songId, hideSong }) => {
     setLiked(true);
     setDisliked(false);
     updateUserScore(1);
+    updateGlobalLike(1);
+    await updateUserActivity(true);
     //hideSong();
+  };
+
+  const updateUserActivity = async (isLike) => {
+    console.log("updateLikeDislikePressed called with:", { isLike, songId });
+    if (!songId) return console.log("No songs to like or dislike");
+
+    const userRef = doc(db, "Parties", partyKeyword, "Users", currentUser.uid);
+
+    if (isLike) {
+      await updateDoc(userRef, {
+        LikePressed: increment(1),
+      });
+    } else {
+      await updateDoc(userRef, {
+        DisLikePressed: increment(1),
+      });
+    }
   };
   
   const handleDislike = async () => {
@@ -114,6 +115,7 @@ const LikeDislike = ({ songId, hideSong }) => {
     setLiked(false);
     setDisliked(true);
     updateUserScore(-1);
+    updateGlobalDislike(1);
     //hideSong();
   };
 

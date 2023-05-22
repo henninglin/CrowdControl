@@ -50,7 +50,9 @@ export default function Login() {
         id: user.uid,
         level: 1,
         score: 0,
-        displayName: user.displayName
+        displayName: user.displayName,
+        LikePressed: 0,
+        DislikePressed: 0
       });
       console.log("Document written with ID: ", docRef.id);
     } catch (e){
@@ -94,6 +96,9 @@ export default function Login() {
         const data = {
           PartyName: partyName,
           Date: partyDate,
+          Like: 0,
+          Dislike: 0,
+          Ratio: []
         };
   
         await setDoc(docRef, data);

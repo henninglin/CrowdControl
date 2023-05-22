@@ -260,6 +260,7 @@ export default function Dashboard({ code }) {
     }
   }, [accessToken]);
 
+  //Display accessToken in console
   useEffect(() => {
     console.log("Access token:", accessToken);
   }, [accessToken]);
@@ -294,6 +295,72 @@ export default function Dashboard({ code }) {
     setHiddenSongs(prevHiddenSongs => [...prevHiddenSongs, songId]);
   };
 
+  //Get Like Dislike Stats
+  const getLikeDislikeCounts = async () => {
+    try {
+      const partyKeyword = localStorage.getItem('partyKeyword');
+      const partyRef = doc(db, 'Parties', partyKeyword);
+      const partyDoc = await getDoc(partyRef);
+  
+      if (partyDoc.exists()) {
+        const partyData = partyDoc.data();
+        const likeCount = partyData.Like;
+        const dislikeCount = partyData.Dislike;
+  
+        return {
+          likeCount,
+          dislikeCount,
+          partyData
+        };
+      } else {
+        console.log('Party document does not exist.');
+        return null;
+      }
+    } catch (error) {
+      console.error('Error getting Like and Dislike counts:', error);
+      return null;
+    }
+  };
+
+  //Track Like/Dislike Ratio every 5 mins.
+  const updateLikeDislikeRatio = async () => {
+    try {
+      const { likeCount, dislikeCount, partyData } = await getLikeDislikeCounts();
+  
+      if (likeCount === null || dislikeCount === null || partyData === null) {
+        // Handle the case when the counts or party data are not available
+        return;
+      }
+  
+      const partyKeyword = localStorage.getItem('partyKeyword');
+      const partyRef = doc(db, 'Parties', partyKeyword);
+      const ratio = Math.floor((likeCount / (likeCount + dislikeCount)) * 100);
+  
+      const formattedDate = new Date().toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: true
+      });
+  
+      await updateDoc(partyRef, {
+        Ratio: {
+          ...partyData.Ratio,
+          [formattedDate]: ratio
+        }
+      });
+  
+      console.log('Like-Dislike ratio updated');
+    } catch (error) {
+      console.error('Error updating Like-Dislike ratio:', error);
+    }
+  };
+  
+  setInterval(updateLikeDislikeRatio, 300000);
+  
+  //Set access token for Spotify
   useEffect(() => {
     if (!accessToken) return console.log("No access token");
     spotifyApi.setAccessToken(accessToken);
