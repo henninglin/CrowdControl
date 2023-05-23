@@ -46,7 +46,7 @@ export default function Dashboard({ code }) {
     const userId = auth.currentUser;
 
     const userQueue = queuedSongs.find(song => song.user === userId.uid);
-    if (userQueue) {
+    if (userQueue && !userQueue.addedToPlaylist) {
       alert("You have already set a song in the queue.");
       return;
     }
