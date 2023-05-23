@@ -87,7 +87,7 @@ const LikeDislike = ({ songId, hideSong }) => {
     updateUserScore(1);
     updateGlobalLike(1);
     await updateUserActivity(true);
-    //hideSong();
+    hideSong();
   };
 
   const updateUserActivity = async (isLike) => {
@@ -117,7 +117,7 @@ const LikeDislike = ({ songId, hideSong }) => {
     updateUserScore(-1);
     updateGlobalDislike(1);
     await updateUserActivity(false);
-    //hideSong();
+    hideSong();
   };
 
   const updateLikesDislikes = async (isLike) => {
@@ -125,17 +125,30 @@ const LikeDislike = ({ songId, hideSong }) => {
     if (!songId) return;
   
     const songRef = doc(db, "Parties", partyKeyword, "searchedSongs", songId);
+    const songDoc = await getDoc(songRef);
   
-    if (isLike) {
-      await updateDoc(songRef, {
-        score: increment(1),
-      });
+    if (songDoc.exists()) {
+      const songData = songDoc.data();
+      if (isLike) {
+        await updateDoc(songRef, {
+          score: increment(1),
+        });
+      } else {
+        if (songData.dislike) {
+          await updateDoc(songRef, {
+            dislike: increment(1),
+          });
+        } else {
+          await updateDoc(songRef, {
+            dislike: 1,
+          });
+        }
+      }
     } else {
-      await updateDoc(songRef, {
-        score: increment(-1),
-      });
+      console.log("Song document does not exist.");
     }
   };
+  
   
 
   if (isLoading) {

@@ -458,7 +458,7 @@ export default function Dashboard({ code }) {
                           />
                         </div>
                         <LikeDislike songId={song.id} 
-                        //hideSong={()=> hideSong(song.id)}
+                        hideSong={()=> hideSong(song.id)}
                         />
                       </div>
                     </div>
