@@ -45,8 +45,8 @@ const ChartComponent = () => {
       // Update the chart data in Firestore every 5 minutes
       setInterval(async () => {
         try {
-          const chartDataRef = doc(db, 'Parties', partyKeyword, 'ChartData');
-          await setDoc(chartDataRef, {
+          const chartDataRef = collection(db, 'Parties', partyKeyword, 'ChartData');
+          await setDoc(doc(chartDataRef), {
             artist: {
               labels: artistLabels,
               counts: artistCountsData,

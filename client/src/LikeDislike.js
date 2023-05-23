@@ -29,7 +29,7 @@ const LikeDislike = ({ songId, hideSong }) => {
     try {
       const partyRef = doc(db, 'Parties', partyKeyword);
       await updateDoc(partyRef, {
-        Like: increment(incrementBy)
+        Dislike: increment(incrementBy)
       });
       console.log(`Global Like updated by ${incrementBy}`);
     } catch (error) {
@@ -116,6 +116,7 @@ const LikeDislike = ({ songId, hideSong }) => {
     setDisliked(true);
     updateUserScore(-1);
     updateGlobalDislike(1);
+    await updateUserActivity(false);
     //hideSong();
   };
 
