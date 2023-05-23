@@ -472,7 +472,7 @@ export default function Dashboard({ code }) {
                 ))}
                 </Carousel>
               ) : (
-                <p>{queuedSongs.length === 0 ? "No songs queued yet" : "All songs have been rated"}</p>
+                <h1>"No songs queued yet"</h1>
               )}
             </div>
             )}

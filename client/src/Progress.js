@@ -35,7 +35,7 @@ const ProgressBar = (props) => {
   return (
     <div style ={containerStyles}>
       <div style ={fillerStyles}>
-        <span style={labelStyles}>{`${completed}%`}</span>
+        <span style={labelStyles}>{`${completed * 10}%`}</span>
       </div>
     </div>
   );
