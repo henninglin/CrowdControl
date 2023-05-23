@@ -44,6 +44,12 @@ export default function Dashboard({ code }) {
 
     const partyKeyword = localStorage.getItem("partyKeyword");
     const userId = auth.currentUser;
+
+    const userQueue = queuedSongs.find(song => song.user === userId.uid);
+    if (userQueue) {
+      alert("You have already set a song in the queue.");
+      return;
+    }
     
     //Add track to firebase
     async function addTrackToFirestore() {
