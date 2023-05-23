@@ -162,10 +162,10 @@ const LikeDislike = ({ songId, hideSong }) => {
   return (
     <div className="my-2 flex-column d-flex align-items-center">
       <div className="d-flex justify-content-center">
-        <button className={`btn mx-3 btn-outline-success${liked || disliked ? ' disabled' : ''}`} onClick={handleLike}>
+        <button className="btn mx-3 btn-outline-success" onClick={handleLike}>
           <FontAwesomeIcon icon={faThumbsUp} size="lg"/>
         </button>
-        <button className={`btn mx-3 btn-outline-danger${liked || disliked ? ' disabled' : ''}`} onClick={handleDislike}>
+        <button className="btn mx-3 btn-outline-danger" onClick={handleDislike}>
           <FontAwesomeIcon icon={faThumbsDown} size="lg" />
         </button>
       </div>
