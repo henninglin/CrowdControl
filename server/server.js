@@ -1,19 +1,20 @@
-require('dotenv').config()
-const express = require("express")
-const cors = require("cors")
-const bodyParser = require("body-parser")
-const lyricsFinder = require("lyrics-finder")
-const SpotifyWebApi = require("spotify-web-api-node")
+require('dotenv').config() // Library to load environment variables from a .env file
+const express = require("express") // Web app framework for Node.js
+const cors = require("cors") // Library to handle Cross-Origin Resource Sharing
+const bodyParser = require("body-parser") // Library to parse request body as JSON
+const lyricsFinder = require("lyrics-finder") // Library to find lyrics based on artist and track name
+const SpotifyWebApi = require("spotify-web-api-node") // Wrapper Library for Spotify API
 const path = require('path');
- 
-const app = express()
-app.use(cors())
-app.use(bodyParser.json())
-app.use(bodyParser.urlencoded({ extended: true }))
-app.use(express.static(path.join(__dirname + "/public")))
 
-const PORT = process.env.PORT || 3001;
- 
+const app = express() // Create an instance of the Express application
+app.use(cors()) // Enable Cross-Origin Resource Sharing
+app.use(bodyParser.json()) // Parse request bodies as JSON
+app.use(bodyParser.urlencoded({ extended: true })) // Parse URL-encoded request bodies
+app.use(express.static(path.join(__dirname + "/public"))) // Serve static files from the "public" directory
+
+const PORT = process.env.PORT || 3001; // Set the port for the server to listen on
+
+// Endpoint for refreshing the access token
 app.post("/refresh", (req, res) => {
   const refreshToken = req.body.refreshToken
   const spotifyApi = new SpotifyWebApi({
@@ -22,7 +23,7 @@ app.post("/refresh", (req, res) => {
     clientSecret: process.env.CLIENT_SECRET,
     refreshToken,
   })
- 
+
   spotifyApi
     .refreshAccessToken()
     console.log('Data from refreshAccessToken:', data)
@@ -37,7 +38,8 @@ app.post("/refresh", (req, res) => {
       res.sendStatus(400)
     })
 })
- 
+
+// Endpoint for the initial login/authentication
 app.post("/login", (req, res) => {
   const code = req.body.code
   const spotifyApi = new SpotifyWebApi({
@@ -45,7 +47,7 @@ app.post("/login", (req, res) => {
     clientId: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
   })
- 
+
   spotifyApi
     .authorizationCodeGrant(code)
     .then(data => {
@@ -61,11 +63,12 @@ app.post("/login", (req, res) => {
       res.sendStatus(400)
     })
 })
- 
+
+// Endpoint for retrieving song lyrics
 app.get("/lyrics", async (req, res) => {
   const lyrics =
     (await lyricsFinder(req.query.artist, req.query.track)) || "No Lyrics Found"
   res.json({ lyrics })
 })
- 
-app.listen(PORT)
+
+app.listen(PORT) // Start the server and listen on the specified port

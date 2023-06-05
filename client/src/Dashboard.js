@@ -11,7 +11,7 @@ import axios from "axios";
 import LikeDislike from "./LikeDislike";
 import Data from "./Data";
 import Participants from "./Participants";
-import History from "./History";
+import Queue from "./Queue";
 import {auth, db} from "./firebase";
 import Level from "./Level";
 import Leaderboard from "./Leaderboard"
@@ -35,6 +35,7 @@ export default function Dashboard({ code }) {
   const [hiddenSongs, setHiddenSongs] = useState([]);
   const [isEscapePressed, setIsEscapePressed] = useState(false);
 
+  //Choose track
   function chooseTrack(track) {
 
     console.log("Selected track: ", track);
@@ -500,7 +501,7 @@ export default function Dashboard({ code }) {
             )}
             {activeTab === "Playlist" && (
               <div className="d-flex justify-content-center align-items-center">
-                <History accessToken={accessToken}/>
+                <Queue accessToken={accessToken}/>
               </div>
             )}
             {activeTab === "Spotify" && (

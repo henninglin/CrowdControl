@@ -9,6 +9,8 @@ const Leaderboard = () => {
   const [currentUser, setCurrentUser] = useState({});
   const partyKeyword = localStorage.getItem("partyKeyword");
 
+
+  //Sort users by level
   useEffect(() => {
     if (partyKeyword) {
       const usersRef = collection(db, "Parties", partyKeyword, "Users");

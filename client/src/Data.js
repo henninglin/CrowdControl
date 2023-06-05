@@ -4,6 +4,8 @@ import { collection, getDocs, doc, setDoc, serverTimestamp } from 'firebase/fire
 import { db } from './firebase';
 
 const ChartComponent = () => {
+
+  //Create a pie chart with top 5 artists and top 5 genres.
   const artistChartRef = useRef(null);
   const genreChartRef = useRef(null);
 

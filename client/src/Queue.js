@@ -3,7 +3,7 @@ import { collection, query, onSnapshot, orderBy, where } from 'firebase/firestor
 import { db } from './firebase';
 import Table from 'react-bootstrap/Table';
 
-const History = () => {
+const Queue = () => {
   const [songs, setSongs] = useState([]);
   const partyKeyword = localStorage.getItem("partyKeyword");
 
@@ -51,4 +51,4 @@ const History = () => {
   );
 };
 
-export default History;
+export default Queue;

@@ -8,9 +8,7 @@ import { getDoc, doc, updateDoc, increment } from "firebase/firestore";
 const LikeDislike = ({ songId, hideSong }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
-  const [liked, setLiked] = useState(false);
-  const [disliked, setDisliked] = useState(false);
-  
+
   const partyKeyword = localStorage.getItem("partyKeyword");
 
   const updateGlobalLike = async (incrementBy) => {
@@ -79,11 +77,9 @@ const LikeDislike = ({ songId, hideSong }) => {
 
   const handleLike = async () => {
     console.log("handleLike called");
-    if (!songId || liked || disliked) return;
+    if (!songId) return;
     
     await updateLikesDislikes(true);
-    setLiked(true);
-    setDisliked(false);
     updateUserScore(1);
     updateGlobalLike(1);
     await updateUserActivity(true);
@@ -109,11 +105,9 @@ const LikeDislike = ({ songId, hideSong }) => {
   
   const handleDislike = async () => {
     console.log("handleDislike called");
-    if (!songId || disliked || liked) return;
+    if (!songId) return;
   
     await updateLikesDislikes(false);
-    setLiked(false);
-    setDisliked(true);
     updateUserScore(-1);
     updateGlobalDislike(1);
     await updateUserActivity(false);

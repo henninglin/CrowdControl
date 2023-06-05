@@ -6,6 +6,7 @@ import React from 'react';
 
 const code = new URLSearchParams(window.location.search).get('code')
 
+//Render the Login component at first. Render Dashboard with received access token.
 function App() {
 
     return code ? 
