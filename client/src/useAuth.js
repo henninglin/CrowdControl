@@ -6,6 +6,7 @@ export default function useAuth(code) {
   const [refreshToken, setRefreshToken] = useState()
   const [expiresIn, setExpiresIn] = useState()
 
+  //Receive Access Token from Server 
   useEffect(() => {
     axios
       .post("https://crowdcontrol.herokuapp.com/login", {
@@ -24,6 +25,7 @@ export default function useAuth(code) {
       })
   }, [code])
 
+  //Refresh access Token a minute before it expires
   useEffect(() => {
     if (!refreshToken || !expiresIn) return
     const interval = setInterval(() => {

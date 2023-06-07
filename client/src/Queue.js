@@ -3,6 +3,7 @@ import { collection, query, onSnapshot, orderBy, where } from 'firebase/firestor
 import { db } from './firebase';
 import Table from 'react-bootstrap/Table';
 
+//Show current queue from firebase sorted by highest priority
 const Queue = () => {
   const [songs, setSongs] = useState([]);
   const partyKeyword = localStorage.getItem("partyKeyword");

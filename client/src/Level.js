@@ -22,7 +22,7 @@ const Level = () => {
     return unsubscribe;
   }, []);
 
-  //
+  //Update the level to be dynamic, if score exceeds 10 then increase in level. If score is less than 0, decrease in level. Score cannot be negative.
   useEffect(() => {
     const partyKeyword = localStorage.getItem("partyKeyword");
 

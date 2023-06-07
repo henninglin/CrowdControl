@@ -3,14 +3,15 @@ import { collection, query, onSnapshot, orderBy, limit, where } from 'firebase/f
 import { db } from './firebase';
 
 const Player = () => {
-  const [currentSong, setCurrentSong] = useState(null);
+  const [nextSong, setNextSong] = useState(null);
   const [latestSong, setLatestSong] = useState(null);
 
 
-    const fetchCurrentSong = async () => {
+  //Show next song played, where addedToPlaylist is false, which means that it havent been played.
+    const fetchNextSong = async () => {
       const partyKeyword = localStorage.getItem('partyKeyword');
       const songsRef = collection(db, 'Parties', partyKeyword, 'searchedSongs');
-      const currentSongQuery = query(
+      const nextSongQuery = query(
         songsRef,
         where('addedToPlaylist', '==', false),
         orderBy('priority', 'desc'),
@@ -18,16 +19,17 @@ const Player = () => {
         limit(1)
       );
 
-      onSnapshot(currentSongQuery, (currentSnapshot) => {
-        if (!currentSnapshot.empty) {
-          const currentSongData = currentSnapshot.docs[0].data();
-          setCurrentSong(currentSongData);
+      onSnapshot(nextSongQuery, (nextSnapshot) => {
+        if (!nextSnapshot.empty) {
+          const nextSongData = nextSnapshot.docs[0].data();
+          setNextSong(nextSongData);
         } else {
-          setCurrentSong(null);
+          setNextSong(null);
         }
       });
     };
 
+    //Show latest song played, where addedToPlaylist is true, which means that it has been played.
     const fetchLatestSong = async () => {
       const partyKeyword = localStorage.getItem('partyKeyword');
       const songsRef = collection(db, 'Parties', partyKeyword, 'searchedSongs');
@@ -48,11 +50,11 @@ const Player = () => {
       });
     };
 
-    fetchCurrentSong();
+    fetchNextSong();
     fetchLatestSong();
 
   useEffect(() => {
-    fetchCurrentSong();
+    fetchNextSong();
   }, []);
   
 
@@ -75,21 +77,21 @@ const Player = () => {
       ) : (
         <div>
           <p>An Error has occured</p>
-          <button onClick={fetchCurrentSong}>Retry Fetch</button>
+          <button onClick={fetchNextSong}>Retry Fetch</button>
         </div>
       )}
-      {currentSong ? (
+      {nextSong ? (
         <div style={{ display: 'flex', alignItems: 'center', marginLeft: '10px' }}>
           <div>
             <img
-              src={currentSong.albumUrl}
+              src={nextSong.albumUrl}
               alt="Album"
               style={{ width: '50px', height: '50px', borderRadius: '10%' }}
             />
           </div>
           <div style={{ marginLeft: '10px' }}>
             <h4 style={{ fontSize: '1em', margin: 0 }}>Next In Queue:</h4>
-            <h4 style={{ fontSize: '0.8em', margin: 0 }}>{currentSong.name} by {currentSong.artist}</h4>
+            <h4 style={{ fontSize: '0.8em', margin: 0 }}>{nextSong.name} by {nextSong.artist}</h4>
           </div>
         </div>
       ) : (

@@ -521,7 +521,6 @@ export default function Dashboard({ code }) {
       <div>
         <Player/>
       </div>
-      
     </Container>
     </div>
   );

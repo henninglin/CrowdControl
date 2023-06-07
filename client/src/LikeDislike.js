@@ -11,6 +11,7 @@ const LikeDislike = ({ songId, hideSong }) => {
 
   const partyKeyword = localStorage.getItem("partyKeyword");
 
+  //Increase Global Like Counter by 1, after like.  
   const updateGlobalLike = async (incrementBy) => {
     try {
       const partyRef = doc(db, 'Parties', partyKeyword);
@@ -23,6 +24,7 @@ const LikeDislike = ({ songId, hideSong }) => {
     }
   };
 
+  //Increase Global Dislike Counter by 1, after dislike.
   const updateGlobalDislike = async (incrementBy) => {
     try {
       const partyRef = doc(db, 'Parties', partyKeyword);
@@ -51,6 +53,7 @@ const LikeDislike = ({ songId, hideSong }) => {
   }, []);
 
 
+  //Update the score of the user that has requested the song.
   const updateUserScore = async (scoreChange) => {
     if (!songId || !currentUser) {
       return;
@@ -86,6 +89,7 @@ const LikeDislike = ({ songId, hideSong }) => {
     hideSong();
   };
 
+  //Update Like or Dislike Activity Counter On The User.
   const updateUserActivity = async (isLike) => {
     console.log("updateLikeDislikePressed called with:", { isLike, songId });
     if (!songId) return console.log("No songs to like or dislike");

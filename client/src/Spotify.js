@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "./firebase";
+
+//Show alreay played songs
 const Spotify = () => {
   const [currentPlaylistId, setCurrentPlaylistId] = useState(null);
   useEffect(() => {
