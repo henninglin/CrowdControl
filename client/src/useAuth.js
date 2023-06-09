@@ -6,12 +6,14 @@ export default function useAuth(code) {
   const [refreshToken, setRefreshToken] = useState()
   const [expiresIn, setExpiresIn] = useState()
 
+  //Receive Access Token from Server 
   useEffect(() => {
     axios
-      .post("http://localhost:3001/login", {
+      .post("https://crowdcontrol.herokuapp.com/login", {
         code,
       })
       .then(res => {
+        console.log("Response from server:", res);
         setAccessToken(res.data.accessToken)
         setRefreshToken(res.data.refreshToken)
         setExpiresIn(res.data.expiresIn)
@@ -19,15 +21,16 @@ export default function useAuth(code) {
       })
       .catch(() => {
         console.log(code)
-        //window.location = "/"
+        window.location = "/"
       })
   }, [code])
 
+  //Refresh access Token a minute before it expires
   useEffect(() => {
     if (!refreshToken || !expiresIn) return
     const interval = setInterval(() => {
       axios
-        .post("http://localhost:3001/refresh", {
+        .post("https://crowdcontrol.herokuapp.com/refresh", {
           refreshToken,
         })
         .then(res => {

@@ -1,10 +1,13 @@
 import React from "react"
 
+
+//Show results from Spotify when searched
 export default function TrackSearchResult({ track, chooseTrack }) {
   function handlePlay() {
+    console.log(`Playing ${track.title} by ${track.artist} (${track.genre})`);
     chooseTrack(track)
+    
   }
-
   return (
     <div
       className="d-flex m-2 align-items-center"
